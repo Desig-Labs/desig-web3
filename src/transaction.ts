@@ -60,7 +60,7 @@ export class Transaction extends Connection {
 
   /**
    * Fetch the transaction data. Note that it's only about multisig info.
-   * @param id The transaction id
+   * @param id Transaction id
    * @returns Transaction data
    */
   fetch = async (id: string): Promise<TransactionEntity> => {
@@ -88,6 +88,12 @@ export class Transaction extends Connection {
     return data
   }
 
+  /**
+   * Approve the transaction.
+   * You will need to submit the commitment in the 1st round to be able to join the 2nd round of signing.
+   * @param id Transaction id
+   * @returns Transaction data & Secret commitment
+   */
   approve = async (
     id: string,
   ): Promise<{ transaction: TransactionEntity; r: Uint8Array }> => {

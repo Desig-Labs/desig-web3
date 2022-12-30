@@ -14,7 +14,6 @@ export class Connection {
     public readonly cluster: string = DEFAULT_CLUSTER_URL,
   ) {
     this.scheme = parseCryptoSys(this.keypair.cryptosys)
-    console.log(`${this.cluster}/${this.scheme}`)
     this.connection = axios.create({
       baseURL: `${this.cluster}/${this.scheme}`,
     })
