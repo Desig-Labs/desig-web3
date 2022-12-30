@@ -14,6 +14,7 @@ export class Connection {
     public readonly cluster: string = DEFAULT_CLUSTER_URL,
   ) {
     this.scheme = parseCryptoSys(this.keypair.cryptosys)
+    console.log(`${this.cluster}/${this.scheme}`)
     this.connection = axios.create({
       baseURL: `${this.cluster}/${this.scheme}`,
     })
@@ -28,27 +29,29 @@ export class Connection {
    * @param address Keypair's address
    * @returns The most current nonce
    */
-  private _nonce = async (address: string) => {
+  private _nonce = async (address: string): Promise<string> => {
     const {
       data: { nonce },
-    } = await axios.get(`/eddsa/signer/${address}`)
+    } = await this.connection.get(`/signer/${address}`)
+    if (!nonce)
+      throw new Error(`Cannot get nonce of ${address} from ${this.cluster}`)
     return nonce
   }
 
   /**
    * Get the most valid authorization on current nonce
    * @param address Keypair's address
-   * @param signMessage Keypair's sign function
+   * @param sign Keypair's sign function
    * @returns The Basic authorization header
    */
   private _authorization = async (
     address: string,
-    signMessage: (msg: Uint8Array) => Promise<Uint8Array>,
+    sign: (msg: Uint8Array) => Promise<Uint8Array>,
   ) => {
-    if (!address || !signMessage) return ''
+    if (!address) throw new Error('Please provide address')
+    if (!sign) throw new Error('Please provide sign function')
     const nonce = await this._nonce(address)
-    if (!nonce) return ''
-    const sig = await signMessage(decode(nonce))
+    const sig = await sign(decode(nonce))
     const credentials = Buffer.from(`${address}:${encode(sig)}`).toString(
       'base64',
     )
@@ -60,7 +63,7 @@ export class Connection {
    * Nonce is the incremental hash (SHA512) of the pubkey
    * @returns The most current nonce
    */
-  getNonce = async () => {
+  protected getNonce = async () => {
     return this._nonce(this.address)
   }
 
@@ -68,7 +71,7 @@ export class Connection {
    * Get the most valid authorization on current nonce
    * @returns The Basic authorization header
    */
-  getAuthorization = async () => {
+  protected getAuthorization = async () => {
     return this._authorization(this.address, this.keypair.sign)
   }
 
@@ -76,7 +79,7 @@ export class Connection {
    * Health check
    * @returns true/false
    */
-  health = async () => {
+  protected health = async () => {
     try {
       await axios.get(`${this.cluster}/health`)
       return true

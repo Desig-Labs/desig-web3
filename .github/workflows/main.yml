@@ -18,6 +18,8 @@ jobs:
         run: yarn install
       - name: Build the library
         run: yarn build
+      - name: Run tests
+        run: yarn test
       - name: Publish the package
         run: npm publish --access=public
         env:

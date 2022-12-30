@@ -16,10 +16,10 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@desig/core@^0.0.15":
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.15.tgz#9457ba595d5118c9dfd36323debd6ce629438e5d"
-  integrity sha512-oVDUljdmUw5TfO6Zx99P5Hmj2rP8tlUtT+4Kw5G8GYv/BU8ZUcBL7BkgMh/GRDpmtB/L3rylwxbtD7FqfqUeyw==
+"@desig/core@^0.0.16":
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.16.tgz#3cdea0198e4167f8f2ee3a8ca3f3d88062da90cc"
+  integrity sha512-iDcrP0OnDbhr4gQ1rrn2l6hLlJU8ZEGY+Wf2qlZtUm8VG6HNTxEAuxKqdh4HvtVb1zoVWsoC+d71m79mzLI5xw==
   dependencies:
     "@noble/ed25519" "^1.7.1"
     "@noble/hashes" "^1.1.5"
@@ -109,6 +109,13 @@
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.3.tgz#472eaab5f15c1ffdd7f8628bd4c4f753995ec79e"
   integrity sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==
+
+"@types/bn.js@^5.1.1":
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/@types/bn.js/-/bn.js-5.1.1.tgz#b51e1b55920a4ca26e9285ff79936bbdec910682"
+  integrity sha512-qNrYbZqMx0uJAfKnKclPh+dTwK33KfLHYqtyODwd5HnXOjnkhc4qgn3BrK6RWyGZm5+sIFE7Q7Vz6QQtJB7w7g==
+  dependencies:
+    "@types/node" "*"
 
 "@types/chai@^4.3.4":
   version "4.3.4"
