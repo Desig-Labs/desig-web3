@@ -5,7 +5,7 @@ import { getCurve, Keypair, Transaction } from '../dist'
 
 const cluster = 'https://devnet.desig.io'
 const secret =
-  'eddsa/CaaPrxEHR6CTDLqXda2tocrCrGuRU83BEfcby8dJWuaU/3KWq19hjnoKJG4LJ71d4R6kZJQ1AMe7eMGHFWnpBfSWa6N7vj4KWZCH9yYpJT1S22aBToQktFcnT6Vt7GUV3CbW'
+  'eddsa/6RpyheKTsdjrcR7KtsHdDp5L7RhtqMHSpJDHoeofKTSZ/3KWq19hjnoKJG4LJ71d4R6kZJQ1AMe7eDqe9YqPY9DF1Fva3TkBc9xP7XTuLmXG5t2kWCEriZ5tKv2YWnm4kTn5'
 
 describe('transaction', () => {
   const keypair = Keypair.fromSecret(secret)
@@ -28,15 +28,8 @@ describe('transaction', () => {
 
   it('approve transaction', async () => {
     const txId = Transaction.deriveTxId(message)
-    const {
-      transaction: { msg, id, randomnesses },
-      r,
-    } = await transaction.approve(txId)
-    const { id: R } = randomnesses.find(
-      ({ signer: { id } }) => id === encode(keypair.pubkey),
-    ) || { id: '' }
+    const { msg, id } = await transaction.approve(txId)
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
-    expect(R).equal(encode(getCurve(keypair.cryptosys).baseMul(r)))
   })
 })

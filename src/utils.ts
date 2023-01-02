@@ -4,6 +4,7 @@ import {
   ECCurve,
   ECUtil,
   EdCurve,
+  EdTSS,
   EdUtil,
 } from '@desig/core'
 
@@ -50,6 +51,16 @@ export const getCurve = (cryptosys: CryptoSys): Curve => {
       return EdCurve
     case CryptoSys.ECDSA:
       return ECCurve
+    default:
+      throw new Error('Unsuppported crypto system')
+  }
+}
+
+export type TSS = typeof EdTSS
+export const getTSS = (cryptosys: CryptoSys): TSS => {
+  switch (cryptosys) {
+    case CryptoSys.EdDSA:
+      return EdTSS
     default:
       throw new Error('Unsuppported crypto system')
   }

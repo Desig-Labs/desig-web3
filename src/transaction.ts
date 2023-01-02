@@ -1,28 +1,44 @@
-import { EdUtil } from '@desig/core'
-import { utils } from '@noble/ed25519'
+import { CryptoSys } from '@desig/core'
 import { sha512 } from '@noble/hashes/sha512'
 import { decode, encode } from 'bs58'
 import { Connection } from './connection'
 import { DEFAULT_CLUSTER_URL } from './constants'
 import { Keypair } from './keypair'
-import { getCurve } from './utils'
+import { getTSS } from './utils'
 
 export type SignerEntiry = {
   id: string
+  index: number
   nonce: string
   activated: boolean
 }
 
-export type RandomnessEntity = {
+export type MultisigEntity = {
   id: string
+  t: number
+  n: number
+  cryptosys: CryptoSys
+  name: string
+  signers: SignerEntiry[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type SignatureEntity = {
+  id: number
+  signature: string
+  randomness: string
   signer: SignerEntiry
+  createdAt: Date
+  updatedAt: Date
 }
 
 export type TransactionEntity = {
   id: string
+  multisig: MultisigEntity
+  signatures: SignatureEntity[]
   msg: string
-  signature: string
-  randomnesses: RandomnessEntity[]
+  R: string
   createdAt: Date
   updatedAt: Date
 }
@@ -43,20 +59,6 @@ export class Transaction extends Connection {
    * @returns The transaction id
    */
   static deriveTxId = (msg: Uint8Array): string => encode(sha512(msg))
-
-  /**
-   * Generate a deterministic randomness for the digital signature algorithm based on message and and derived key
-   * @param msg Transaction's content (Or message)
-   * @returns The randomness
-   */
-  determineRandomness = (msg: Uint8Array): DeterministicRandomness => {
-    const derikey = EdUtil.getDerivedKey(this.keypair.privkey)
-    const seed = sha512(utils.concatBytes(derikey, msg))
-    const curve = getCurve(this.keypair.cryptosys)
-    const r = curve.mod(seed)
-    const R = curve.baseMul(r)
-    return { r, R }
-  }
 
   /**
    * Fetch the transaction data. Note that it's only about multisig info.
@@ -92,19 +94,27 @@ export class Transaction extends Connection {
    * Approve the transaction.
    * You will need to submit the commitment in the 1st round to be able to join the 2nd round of signing.
    * @param id Transaction id
-   * @returns Transaction data & Secret commitment
+   * @returns Transaction data
    */
-  approve = async (
-    id: string,
-  ): Promise<{ transaction: TransactionEntity; r: Uint8Array }> => {
-    const { msg } = await this.fetch(id)
-    const { r, R } = this.determineRandomness(decode(msg))
+  approve = async (id: string): Promise<TransactionEntity> => {
+    const { msg, signatures, R } = await this.fetch(id)
+    const { randomness } = signatures.find(
+      ({ signer: { id } }) => id === encode(this.keypair.pubkey),
+    )
+    const tss = getTSS(this.keypair.cryptosys)
+    const signature = tss.sign(
+      decode(msg),
+      decode(R),
+      this.keypair.masterkey,
+      decode(randomness).subarray(32),
+      this.keypair.privkey,
+    )
     const authorization = await this.getAuthorization()
     const { data } = await this.connection.patch(
       `/transaction/${id}`,
-      { R: encode(R) },
+      { signature: encode(signature) },
       { headers: { authorization } },
     )
-    return { transaction: data, r }
+    return data
   }
 }
