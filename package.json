@@ -3,6 +3,14 @@
   "version": "0.0.9",
   "description": "The Decentralized Signature",
   "homepage": "https://web3.desig.io/",
+  "keywords": [
+    "blockchain",
+    "multisig",
+    "multichain",
+    "chain-neutral",
+    "smartcontractless",
+    "layer0"
+  ],
   "main": "dist/index.js",
   "repository": "git@github.com:DescartesNetwork/desig-web3.git",
   "author": {
@@ -28,7 +36,7 @@
     "node": ">=16 <=18"
   },
   "dependencies": {
-    "@desig/core": "^0.0.19",
+    "@desig/core": "^0.0.20",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",
     "@noble/secp256k1": "^1.7.0",
