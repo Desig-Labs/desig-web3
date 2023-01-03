@@ -37,9 +37,10 @@ describe('transaction', () => {
     expect(txId).equal(id)
   })
 
-  it('finalize transaction', async () => {
+  it('finalize/verify transaction', async () => {
     const txId = Transaction.deriveTxId(message)
-    const re = await bob.finalize(txId)
-    console.log(re)
+    const sig = await bob.finalize(txId)
+    const ok = await bob.verify(txId, sig)
+    expect(ok).to.be.true
   })
 })

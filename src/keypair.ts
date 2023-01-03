@@ -43,6 +43,11 @@ export class Keypair {
     this.n = n
   }
 
+  /**
+   * Instantiate a keypair
+   * @param secret User's secret
+   * @returns A keypair instant
+   */
   static fromSecret = (secret: string): Keypair => {
     const [scheme, masterkey, share] = secret.split('/')
     const cryptosys = parseScheme(scheme)
@@ -65,6 +70,10 @@ export class Keypair {
     })
   }
 
+  /**
+   * Construct the secret string
+   * @returns Secret string
+   */
   toSecret = (): string => {
     const scheme = parseCryptoSys(this.cryptosys)
     const share = SecretSharing.compress({
@@ -77,6 +86,11 @@ export class Keypair {
     return `${scheme}/${encode(this.masterkey)}/${encode(share)}`
   }
 
+  /**
+   * Partially sign a message
+   * @param msg Message to be signed
+   * @returns Signature
+   */
   sign = async (msg: Uint8Array): Promise<Uint8Array> => {
     switch (this.cryptosys) {
       case CryptoSys.EdDSA:

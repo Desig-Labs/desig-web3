@@ -114,8 +114,15 @@ export class Transaction extends Connection {
     const curve = getCurve(this.keypair.cryptosys)
     const tss = getTSS(this.keypair.cryptosys)
     const secretSharing = new SecretSharing(curve.red)
-    let { signatures } = await this.fetch(id)
+    let {
+      signatures,
+      multisig: { t },
+    } = await this.fetch(id)
     signatures = signatures.filter(({ signature }) => !!signature)
+    if (signatures.length < t)
+      throw new Error(
+        `Insufficient number of signatures. Require ${t} but got ${signatures.length}.`,
+      )
     const indice = signatures.map(({ signer: { index } }) =>
       new BN(index).toArrayLike(Buffer, 'le', 8),
     )
@@ -127,5 +134,17 @@ export class Transaction extends Connection {
       return utils.concatBytes(R, S)
     })
     return encode(tss.addSig(...sigs))
+  }
+
+  /**
+   * Verify a master signature
+   * @param id Transaction id
+   * @param signature Master signature
+   * @returns true/false
+   */
+  verify = async (id: string, signature: string) => {
+    const { msg } = await this.fetch(id)
+    const tss = getTSS(this.keypair.cryptosys)
+    return tss.verify(decode(msg), decode(signature), this.keypair.masterkey)
   }
 }
