@@ -7,6 +7,8 @@ import {
   EdTSS,
   EdUtil,
 } from '@desig/core'
+import { PublicKey } from '@solana/web3.js'
+import web3 from 'web3'
 
 export const parseScheme = (scheme: CryptoScheme | string): CryptoSys => {
   switch (scheme) {
@@ -15,7 +17,7 @@ export const parseScheme = (scheme: CryptoScheme | string): CryptoSys => {
     case 'ecdsa':
       return CryptoSys.ECDSA
     default:
-      throw new Error('Invalid desig secret format')
+      throw new Error('Invalid desig secret format.')
   }
 }
 
@@ -26,7 +28,7 @@ export const parseCryptoSys = (cryptosys: CryptoSys | number): CryptoScheme => {
     case CryptoSys.ECDSA:
       return 'ecdsa'
     default:
-      throw new Error('Invalid desig secret format')
+      throw new Error('Invalid desig secret format.')
   }
 }
 
@@ -40,7 +42,7 @@ export const getPubkey = (
     case CryptoSys.ECDSA:
       return ECUtil.getPublicKey(privkey)
     default:
-      throw new Error('Unsuppported crypto system')
+      throw new Error('Unsuppported crypto system.')
   }
 }
 
@@ -52,7 +54,7 @@ export const getCurve = (cryptosys: CryptoSys): Curve => {
     case CryptoSys.ECDSA:
       return ECCurve
     default:
-      throw new Error('Unsuppported crypto system')
+      throw new Error('Unsuppported crypto system.')
   }
 }
 
@@ -62,6 +64,46 @@ export const getTSS = (cryptosys: CryptoSys): TSS => {
     case CryptoSys.EdDSA:
       return EdTSS
     default:
-      throw new Error('Unsuppported crypto system')
+      throw new Error('Unsuppported crypto system.')
+  }
+}
+
+/**
+ * Validate email address
+ * @param email
+ * @returns
+ */
+export const isEmailAddress = (email: string) =>
+  email.match(
+    /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+  )
+
+/**
+ * Validate Ethereum address
+ * @param address Ethereum address
+ * @returns true/false
+ */
+export const isEthereumAddress = (
+  address: string | undefined,
+): address is string => {
+  if (!address) return false
+  return web3.utils.isAddress(address)
+}
+
+/**
+ * Validate Solana address
+ * @param address Solana address
+ * @returns true/false
+ */
+export const isSolanaAddress = (
+  address: string | undefined,
+): address is string => {
+  if (!address) return false
+  try {
+    const publicKey = new PublicKey(address)
+    if (!publicKey) throw new Error('Invalid public key')
+    return true
+  } catch (er) {
+    return false
   }
 }

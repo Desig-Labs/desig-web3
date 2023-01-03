@@ -20,6 +20,8 @@ export class Connection {
   }
 
   get address() {
+    if (!this.keypair?.pubkey)
+      throw new Error('Cannot run this function with a read-only keypair')
     return encode(this.keypair.pubkey)
   }
 
@@ -71,6 +73,8 @@ export class Connection {
    * @returns The Basic authorization header
    */
   protected getAuthorization = async () => {
+    if (!this.keypair?.sign)
+      throw new Error('Cannot run this function with a read-only keypair')
     return this._authorization(this.address, this.keypair.sign)
   }
 

@@ -1,28 +1,11 @@
-import { CryptoSys } from '@desig/core'
 import { sha512 } from '@noble/hashes/sha512'
 import { decode, encode } from 'bs58'
 import { Connection } from './connection'
 import { DEFAULT_CLUSTER_URL } from './constants'
 import { Keypair } from './keypair'
+import { MultisigEntity } from './multisig'
+import { SignerEntiry } from './signer'
 import { getTSS } from './utils'
-
-export type SignerEntiry = {
-  id: string
-  index: number
-  nonce: string
-  activated: boolean
-}
-
-export type MultisigEntity = {
-  id: string
-  t: number
-  n: number
-  cryptosys: CryptoSys
-  name: string
-  signers: SignerEntiry[]
-  createdAt: Date
-  updatedAt: Date
-}
 
 export type SignatureEntity = {
   id: number
@@ -43,11 +26,6 @@ export type TransactionEntity = {
   updatedAt: Date
 }
 
-export type DeterministicRandomness = {
-  r: Uint8Array
-  R: Uint8Array
-}
-
 export class Transaction extends Connection {
   constructor(keypair: Keypair, cluster: string = DEFAULT_CLUSTER_URL) {
     super(keypair, cluster)
@@ -61,25 +39,31 @@ export class Transaction extends Connection {
   static deriveTxId = (msg: Uint8Array): string => encode(sha512(msg))
 
   /**
-   * Fetch the transaction data. Note that it's only about multisig info.
+   * Fetch transaction data. Note that it's only about multisig info.
    * @param id Transaction id
    * @returns Transaction data
    */
   fetch = async (id: string): Promise<TransactionEntity> => {
-    const { data } = await this.connection.get(`/transaction/${id}`)
+    const { data } = await this.connection.get<TransactionEntity>(
+      `/transaction/${id}`,
+    )
     return data
   }
 
   /**
-   * Submit the transaction to desig cluster
+   * Submit a transaction to desig cluster
    * @param message Mesage buffer
    * @returns Transaction data
    */
-  initialize = async (message: Uint8Array): Promise<TransactionEntity> => {
+  initialize = async ({
+    message,
+  }: {
+    message: Uint8Array
+  }): Promise<TransactionEntity> => {
     const multisigId = encode(this.keypair.masterkey)
     const msg = encode(message)
     const authorization = await this.getAuthorization()
-    const { data } = await this.connection.post(
+    const { data } = await this.connection.post<TransactionEntity>(
       '/transaction',
       {
         multisigId,
@@ -110,7 +94,7 @@ export class Transaction extends Connection {
       this.keypair.privkey,
     )
     const authorization = await this.getAuthorization()
-    const { data } = await this.connection.patch(
+    const { data } = await this.connection.patch<TransactionEntity>(
       `/transaction/${id}`,
       { signature: encode(signature) },
       { headers: { authorization } },

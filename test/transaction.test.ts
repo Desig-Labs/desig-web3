@@ -1,11 +1,8 @@
 import { utils } from '@noble/ed25519'
 import { encode } from 'bs58'
 import { expect } from 'chai'
-import { getCurve, Keypair, Transaction } from '../dist'
-
-const cluster = 'https://devnet.desig.io'
-const secret =
-  'eddsa/6RpyheKTsdjrcR7KtsHdDp5L7RhtqMHSpJDHoeofKTSZ/3KWq19hjnoKJG4LJ71d4R6kZJQ1AMe7eDqe9YqPY9DF1Fva3TkBc9xP7XTuLmXG5t2kWCEriZ5tKv2YWnm4kTn5'
+import { Keypair, Transaction } from '../dist'
+import { cluster, secret } from './config'
 
 describe('transaction', () => {
   const keypair = Keypair.fromSecret(secret)
@@ -14,7 +11,7 @@ describe('transaction', () => {
 
   it('initialize transaction', async () => {
     const txId = Transaction.deriveTxId(message)
-    const { msg, id } = await transaction.initialize(message)
+    const { msg, id } = await transaction.initialize({ message })
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
