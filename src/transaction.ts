@@ -1,11 +1,14 @@
+import { SecretSharing } from '@desig/core'
+import { utils } from '@noble/ed25519'
 import { sha512 } from '@noble/hashes/sha512'
+import { BN } from 'bn.js'
 import { decode, encode } from 'bs58'
 import { Connection } from './connection'
 import { DEFAULT_CLUSTER_URL } from './constants'
 import { Keypair } from './keypair'
 import { MultisigEntity } from './multisig'
 import { SignerEntiry } from './signer'
-import { getTSS } from './utils'
+import { getCurve, getTSS } from './utils'
 
 export type SignatureEntity = {
   id: number
@@ -100,5 +103,29 @@ export class Transaction extends Connection {
       { headers: { authorization } },
     )
     return data
+  }
+
+  /**
+   * Finalize the partial signatures. The function will combine the partial signatures and construct the valid master signature.
+   * @param id Transaction id
+   * @returns Master signature
+   */
+  finalize = async (id: string): Promise<string> => {
+    const curve = getCurve(this.keypair.cryptosys)
+    const tss = getTSS(this.keypair.cryptosys)
+    const secretSharing = new SecretSharing(curve.red)
+    let { signatures } = await this.fetch(id)
+    signatures = signatures.filter(({ signature }) => !!signature)
+    const indice = signatures.map(({ signer: { index } }) =>
+      new BN(index).toArrayLike(Buffer, 'le', 8),
+    )
+    const pi = secretSharing.pi(indice)
+    const sigs = signatures.map(({ signature }, i) => {
+      const sig = decode(signature)
+      const R = curve.mulScalar(sig.subarray(0, 32), pi[i])
+      const S = secretSharing.yl(sig.subarray(32), pi[i])
+      return utils.concatBytes(R, S)
+    })
+    return encode(tss.addSig(...sigs))
   }
 }

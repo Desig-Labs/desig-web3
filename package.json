@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "The Decentralized Signature",
   "main": "dist/index.js",
   "repository": "git@github.com:DescartesNetwork/desig-web3.git",
@@ -27,7 +27,7 @@
     "node": ">=16 <=18"
   },
   "dependencies": {
-    "@desig/core": "^0.0.18",
+    "@desig/core": "^0.0.19",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",
     "@noble/secp256k1": "^1.7.0",

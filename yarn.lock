@@ -16,10 +16,10 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@desig/core@^0.0.18":
-  version "0.0.18"
-  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.18.tgz#ff7eb0c879cb81ce0965634d16da3644d2025456"
-  integrity sha512-RYfA7FQhPBJuNHUyEzvc1fMQ4yMW0/E5m45xPC0mnwwdVeo5sXs7dBf67tD+07MSvjE7OnnVxHwHCI/4WF+G5A==
+"@desig/core@^0.0.19":
+  version "0.0.19"
+  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.19.tgz#feb48025e20a4b0b2fd0d8647644fffc0403d392"
+  integrity sha512-TiLneJTCRRPbHUfuNkJxO027U65QvnKgpy/A3CyFb4RjYgLNzHWbN8U0WBysotu/JolBQkhjMzXcWG+qDDmPtw==
   dependencies:
     "@noble/ed25519" "^1.7.1"
     "@noble/hashes" "^1.1.5"

@@ -1,4 +1,4 @@
-# Decentralized Signature (Desig)
+# Decentralized Signature | Desig
 
 This library to help clients to interact with the Desig cluster.
 
