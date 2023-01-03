@@ -1,5 +1,5 @@
 export const cluster = 'https://devnet.desig.io'
 export const aliceSecret =
-  'eddsa/6RpyheKTsdjrcR7KtsHdDp5L7RhtqMHSpJDHoeofKTSZ/3KWq19hjnoKJG4LJ71d4R6kZJQ1AMe7eDqe9YqPY9DF1Fva3TkBc9xP7XTuLmXG5t2kWCEriZ5tKv2YWnm4kTn5'
+  'eddsa/4JKKpEK3teGFFbxeTFzScBaYse55mH4LgbtYG3q4BcKv/2AFv15MNPuABCdZq1uf8PCPa2gBYrgjpLxDu1mGCiBkfdqvP3ahydUXYF1YshvsCARgpvgt5wHcghGUfQxghGEf'
 export const bobSecret =
-  'eddsa/6RpyheKTsdjrcR7KtsHdDp5L7RhtqMHSpJDHoeofKTSZ/2AFv15MNPuABCdZq1uf8PCPa2gBYrgjpEfyUkFnGeHWdazbMsDe6i8EtavWxuNwj1chmj4TUCR9Dxot3wWeMiPr'
+  'eddsa/4JKKpEK3teGFFbxeTFzScBaYse55mH4LgbtYG3q4BcKv/3KWq19hjnoKJG4LJ71d4R6kZJQ1AMe7eL7tZpLsUD7Uq2rmEra5eGGeCRQWgDvpYtneHzY8qBS58hPjVSpJAviy'
