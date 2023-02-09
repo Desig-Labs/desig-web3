@@ -10,7 +10,7 @@ describe('multisig', () => {
   const t = 2
   const n = 3
   const name = `The Dao #${rand}`
-  const emails = ['dummy@desig.io', 'dummy@descartes.network']
+  const emails = ['dummy@desig.io', 'dummy@desig.dev']
   let multisigId = ''
 
   it('initialize multisig', async () => {

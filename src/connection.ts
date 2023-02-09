@@ -1,21 +1,16 @@
-import { CryptoScheme } from '@desig/core'
 import axios, { AxiosInstance } from 'axios'
 import { decode, encode } from 'bs58'
-import { DEFAULT_CLUSTER_URL } from './constants'
 import { Keypair } from './keypair'
-import { parseCryptoSys } from './utils'
 
 export class Connection {
-  private scheme: CryptoScheme
   protected connection: AxiosInstance
 
   constructor(
     public readonly keypair: Keypair,
-    public readonly cluster: string = DEFAULT_CLUSTER_URL,
+    public readonly cluster: string,
   ) {
-    this.scheme = parseCryptoSys(this.keypair.cryptosys)
     this.connection = axios.create({
-      baseURL: `${this.cluster}/${this.scheme}`,
+      baseURL: this.cluster,
     })
   }
 

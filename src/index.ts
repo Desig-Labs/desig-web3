@@ -1,6 +1,5 @@
 export * from './keypair'
 export * from './utils'
-export * from './constants'
 export * from './connection'
 export * from './transaction'
 export * from './multisig'

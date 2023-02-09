@@ -4,7 +4,6 @@ import { sha512 } from '@noble/hashes/sha512'
 import { BN } from 'bn.js'
 import { decode, encode } from 'bs58'
 import { Connection } from './connection'
-import { DEFAULT_CLUSTER_URL } from './constants'
 import { Keypair } from './keypair'
 import { MultisigEntity } from './multisig'
 import { SignerEntiry } from './signer'
@@ -30,7 +29,7 @@ export type TransactionEntity = {
 }
 
 export class Transaction extends Connection {
-  constructor(keypair: Keypair, cluster: string = DEFAULT_CLUSTER_URL) {
+  constructor(keypair: Keypair, cluster: string) {
     super(keypair, cluster)
   }
 

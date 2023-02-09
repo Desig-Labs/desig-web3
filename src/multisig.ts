@@ -1,6 +1,5 @@
 import { CryptoSys } from '@desig/core'
 import { Connection } from './connection'
-import { DEFAULT_CLUSTER_URL } from './constants'
 import { Keypair } from './keypair'
 import { SignerEntiry } from './signer'
 import { isEmailAddress } from './utils'
@@ -17,7 +16,7 @@ export type MultisigEntity = {
 }
 
 export class Multisig extends Connection {
-  constructor(keypair: Keypair, cluster: string = DEFAULT_CLUSTER_URL) {
+  constructor(keypair: Keypair, cluster: string) {
     super(keypair, cluster)
   }
 
