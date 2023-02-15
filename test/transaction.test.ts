@@ -5,8 +5,8 @@ import { Keypair, Transaction } from '../dist'
 import { cluster, aliceSecret, bobSecret } from './config'
 
 describe('transaction', () => {
-  const alice = new Transaction(Keypair.fromSecret(aliceSecret), cluster)
-  const bob = new Transaction(Keypair.fromSecret(bobSecret), cluster)
+  const alice = new Transaction(cluster, Keypair.fromSecret(aliceSecret))
+  const bob = new Transaction(cluster, Keypair.fromSecret(bobSecret))
   const message = utils.randomBytes(32)
 
   it('initialize transaction', async () => {

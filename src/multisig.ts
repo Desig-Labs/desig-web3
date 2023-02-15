@@ -1,4 +1,3 @@
-import { CryptoSys } from '@desig/core'
 import { Connection } from './connection'
 import { Keypair } from './keypair'
 import { SignerEntiry } from './signer'
@@ -8,7 +7,6 @@ export type MultisigEntity = {
   id: string
   t: number
   n: number
-  cryptosys: CryptoSys
   name: string
   signers: SignerEntiry[]
   createdAt: Date
@@ -16,8 +14,8 @@ export type MultisigEntity = {
 }
 
 export class Multisig extends Connection {
-  constructor(keypair: Keypair, cluster: string) {
-    super(keypair, cluster)
+  constructor(cluster: string, keypair?: Keypair) {
+    super(cluster, keypair)
   }
 
   /**
@@ -51,7 +49,7 @@ export class Multisig extends Connection {
     name?: string
     emails: string[]
   }): Promise<MultisigEntity> => {
-    if (t < 2 || n < 2 || t > n)
+    if (t < 1 || n < 1 || t > n)
       throw new Error(`Invalid threshold. Current (t,n)=(${t},${n}).`)
     if (emails.length !== t)
       throw new Error(`Insufficient number of emails. Should be equal to ${t}.`)

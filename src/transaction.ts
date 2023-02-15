@@ -29,8 +29,8 @@ export type TransactionEntity = {
 }
 
 export class Transaction extends Connection {
-  constructor(keypair: Keypair, cluster: string) {
-    super(keypair, cluster)
+  constructor(cluster: string, keypair?: Keypair) {
+    super(cluster, keypair)
   }
 
   /**

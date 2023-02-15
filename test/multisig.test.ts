@@ -1,11 +1,9 @@
-import { CryptoSys } from '@desig/core'
 import { expect } from 'chai'
-import { Keypair, Multisig } from '../dist'
+import { Multisig } from '../dist'
 import { cluster } from './config'
 
 describe('multisig', () => {
-  const keypair = new Keypair({ cryptosys: CryptoSys.EdDSA })
-  const multisig = new Multisig(keypair, cluster)
+  const multisig = new Multisig(cluster)
   const rand = Math.round(Math.random() * 10 ** 9)
   const t = 2
   const n = 3

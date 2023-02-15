@@ -6,12 +6,10 @@ export class Connection {
   protected connection: AxiosInstance
 
   constructor(
-    public readonly keypair: Keypair,
     public readonly cluster: string,
+    public readonly keypair?: Keypair,
   ) {
-    this.connection = axios.create({
-      baseURL: this.cluster,
-    })
+    this.connection = axios.create({ baseURL: this.cluster })
   }
 
   get address() {

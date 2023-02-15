@@ -15,13 +15,13 @@ export type KeypairProps = {
 
 export class Keypair {
   public cryptosys: CryptoSys
-  public masterkey?: Uint8Array
-  public pubkey?: Uint8Array
-  public privkey?: Uint8Array
-  public id?: Uint8Array
-  public index?: Uint8Array
-  public t?: Uint8Array
-  public n?: Uint8Array
+  public masterkey: Uint8Array
+  public pubkey: Uint8Array
+  public privkey: Uint8Array
+  public id: Uint8Array
+  public index: Uint8Array
+  public t: Uint8Array
+  public n: Uint8Array
 
   constructor({
     cryptosys,
