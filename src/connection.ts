@@ -1,13 +1,13 @@
 import axios, { AxiosInstance } from 'axios'
 import { decode, encode } from 'bs58'
-import { Keypair } from './keypair'
+import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 
 export class Connection {
   protected connection: AxiosInstance
 
   constructor(
     public readonly cluster: string,
-    public readonly keypair?: Keypair,
+    public readonly keypair?: DesigEdDSAKeypair | DesigECDSAKeypair,
   ) {
     this.connection = axios.create({ baseURL: this.cluster })
   }

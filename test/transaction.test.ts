@@ -1,12 +1,12 @@
 import { utils } from '@noble/ed25519'
 import { encode } from 'bs58'
 import { expect } from 'chai'
-import { Keypair, Transaction } from '../dist'
+import { DesigEdDSAKeypair, Transaction } from '../dist'
 import { cluster, aliceSecret, bobSecret } from './config'
 
 describe('transaction', () => {
-  const alice = new Transaction(cluster, Keypair.fromSecret(aliceSecret))
-  const bob = new Transaction(cluster, Keypair.fromSecret(bobSecret))
+  const alice = new Transaction(cluster, new DesigEdDSAKeypair(aliceSecret))
+  const bob = new Transaction(cluster, new DesigEdDSAKeypair(bobSecret))
   const message = utils.randomBytes(32)
 
   it('initialize transaction', async () => {

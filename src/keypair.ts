@@ -1,20 +1,36 @@
-import { CryptoSys, ECUtil, EdUtil, SecretSharing } from '@desig/core'
+import {
+  CryptoSys,
+  ECTSS,
+  ECUtil,
+  EdTSS,
+  EdUtil,
+  SecretSharing,
+} from '@desig/core'
 import { decode, encode } from 'bs58'
-import { getPubkey, parseCryptoSys, parseScheme } from './utils'
+import { parseScheme } from './utils'
 
-export type KeypairProps = {
-  cryptosys: CryptoSys
-  masterkey?: Uint8Array
-  pubkey?: Uint8Array
-  privkey?: Uint8Array
-  id?: Uint8Array
-  index?: Uint8Array
-  t?: Uint8Array
-  n?: Uint8Array
+export interface WalletAdapter {
+  readonly cryptosys: CryptoSys
+  pubkey: Uint8Array
+  privkey: Uint8Array
+
+  getAddress: () => string
+  getPublicKey: () => Uint8Array
+  getPrivateKey: () => string
+  sign: (msg: Uint8Array) => Promise<Uint8Array>
+  approve: (msg: Uint8Array) => Promise<Uint8Array>
 }
 
-export class Keypair {
-  public cryptosys: CryptoSys
+export interface MultisigWalletAdapter extends WalletAdapter {
+  masterkey: Uint8Array
+  id: Uint8Array
+  index: Uint8Array
+  t: Uint8Array
+  n: Uint8Array
+}
+
+export class DesigEdDSAKeypair implements MultisigWalletAdapter {
+  public readonly cryptosys: CryptoSys = CryptoSys.EdDSA
   public masterkey: Uint8Array
   public pubkey: Uint8Array
   public privkey: Uint8Array
@@ -23,34 +39,12 @@ export class Keypair {
   public t: Uint8Array
   public n: Uint8Array
 
-  constructor({
-    cryptosys,
-    masterkey,
-    pubkey,
-    privkey,
-    id,
-    index,
-    t,
-    n,
-  }: KeypairProps) {
-    this.cryptosys = cryptosys
-    this.masterkey = masterkey
-    this.pubkey = pubkey
-    this.privkey = privkey
-    this.id = id
-    this.index = index
-    this.t = t
-    this.n = n
-  }
-
-  /**
-   * Instantiate a keypair
-   * @param secret User's secret
-   * @returns A keypair instant
-   */
-  static fromSecret = (secret: string): Keypair => {
+  constructor(secret: string) {
     const [scheme, masterkey, share] = secret.split('/')
-    const cryptosys = parseScheme(scheme)
+    if (this.cryptosys !== parseScheme(scheme))
+      throw new Error('Invalid desig eddsa keypair')
+
+    this.masterkey = decode(masterkey)
     const {
       share: privkey,
       id,
@@ -58,47 +52,103 @@ export class Keypair {
       t,
       n,
     } = SecretSharing.extract(decode(share))
-    return new Keypair({
-      cryptosys,
-      masterkey: decode(masterkey),
-      privkey,
-      pubkey: getPubkey(cryptosys, privkey),
-      id,
-      index,
-      t,
-      n,
-    })
+    this.id = id
+    this.index = index
+    this.t = t
+    this.n = n
+    this.privkey = privkey
+    this.pubkey = EdUtil.getPublicKey(this.privkey)
   }
 
-  /**
-   * Construct the secret string
-   * @returns Secret string
-   */
-  toSecret = (): string => {
-    const scheme = parseCryptoSys(this.cryptosys)
-    const share = SecretSharing.compress({
+  getAddress = () => {
+    return encode(this.pubkey)
+  }
+
+  getPublicKey = () => {
+    return this.pubkey
+  }
+
+  getPrivateKey = () =>
+    `eddsa/${SecretSharing.compress({
       index: this.index,
       t: this.t,
       n: this.n,
       id: this.id,
       share: this.privkey,
-    })
-    return `${scheme}/${encode(this.masterkey)}/${encode(share)}`
+    })}`
+
+  sign = async (msg: Uint8Array): Promise<Uint8Array> => {
+    return EdUtil.sign(msg, this.privkey)
   }
 
-  /**
-   * Partially sign a message
-   * @param msg Message to be signed
-   * @returns Signature
-   */
+  private preapprove = async (): Promise<{ R: Uint8Array; r: Uint8Array }> => {
+    return { R: Uint8Array.from([]), r: Uint8Array.from([]) }
+  }
+
+  approve = async (msg: Uint8Array): Promise<Uint8Array> => {
+    const { R, r } = await this.preapprove()
+    return EdTSS.sign(msg, R, this.masterkey, r, this.privkey)
+  }
+}
+
+export class DesigECDSAKeypair implements MultisigWalletAdapter {
+  public cryptosys: CryptoSys = CryptoSys.ECDSA
+  public masterkey: Uint8Array
+  public pubkey: Uint8Array
+  public privkey: Uint8Array
+  public id: Uint8Array
+  public index: Uint8Array
+  public t: Uint8Array
+  public n: Uint8Array
+
+  constructor(secret: string) {
+    const [scheme, masterkey, share] = secret.split('/')
+    if (this.cryptosys !== parseScheme(scheme))
+      throw new Error('Invalid desig eddsa keypair')
+
+    this.masterkey = decode(masterkey)
+    const {
+      share: privkey,
+      id,
+      index,
+      t,
+      n,
+    } = SecretSharing.extract(decode(share))
+    this.id = id
+    this.index = index
+    this.t = t
+    this.n = n
+    this.privkey = privkey
+    this.pubkey = ECUtil.getPublicKey(this.privkey)
+  }
+
+  getAddress = () => {
+    return encode(this.pubkey)
+  }
+
+  getPublicKey = () => {
+    return this.pubkey
+  }
+
+  getPrivateKey = () =>
+    `ecdsa/${SecretSharing.compress({
+      index: this.index,
+      t: this.t,
+      n: this.n,
+      id: this.id,
+      share: this.privkey,
+    })}`
+
   sign = async (msg: Uint8Array): Promise<Uint8Array> => {
-    switch (this.cryptosys) {
-      case CryptoSys.EdDSA:
-        return EdUtil.sign(msg, this.privkey)
-      case CryptoSys.ECDSA:
-        return ECUtil.sign(msg, this.privkey)
-      default:
-        throw new Error('Invalid desig secret format')
-    }
+    return ECUtil.sign(msg, this.privkey)
+  }
+
+  private preapprove = async (): Promise<{ R: Uint8Array; z: Uint8Array }> => {
+    return { R: Uint8Array.from([]), z: Uint8Array.from([]) }
+  }
+
+  approve = async (msg: Uint8Array): Promise<Uint8Array> => {
+    const { R, z } = await this.preapprove()
+    return ECTSS.sign(R, z, this.privkey)
   }
 }

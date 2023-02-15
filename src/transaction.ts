@@ -4,7 +4,7 @@ import { sha512 } from '@noble/hashes/sha512'
 import { BN } from 'bn.js'
 import { decode, encode } from 'bs58'
 import { Connection } from './connection'
-import { Keypair } from './keypair'
+import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import { MultisigEntity } from './multisig'
 import { SignerEntiry } from './signer'
 import { getCurve, getTSS } from './utils'
@@ -29,7 +29,10 @@ export type TransactionEntity = {
 }
 
 export class Transaction extends Connection {
-  constructor(cluster: string, keypair?: Keypair) {
+  constructor(
+    cluster: string,
+    keypair?: DesigEdDSAKeypair | DesigECDSAKeypair,
+  ) {
     super(cluster, keypair)
   }
 
