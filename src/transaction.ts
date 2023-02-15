@@ -112,7 +112,7 @@ export class Transaction extends Connection {
   finalize = async (id: string): Promise<string> => {
     const curve = getCurve(this.keypair.cryptosys)
     const tss = getTSS(this.keypair.cryptosys)
-    const secretSharing = new SecretSharing(curve.red)
+    const secretSharing = new SecretSharing(curve.ff.r)
     let {
       signatures,
       multisig: { t },
@@ -132,7 +132,15 @@ export class Transaction extends Connection {
       const S = secretSharing.yl(sig.subarray(32), pi[i])
       return utils.concatBytes(R, S)
     })
-    return encode(tss.addSig(...sigs))
+    return encode(
+      tss.addSig(
+        sigs,
+        new Uint8Array([]),
+        new Uint8Array([]),
+        new Uint8Array([]),
+        new Uint8Array([]),
+      ),
+    )
   }
 
   /**

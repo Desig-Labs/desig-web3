@@ -16,15 +16,14 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@desig/core@^0.0.21":
-  version "0.0.21"
-  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.21.tgz#8fe5d83616b118fee520d3e73e4bc3c0bad50b0e"
-  integrity sha512-7wsui4gAGPryO8NiADfRCgLGL5wK6ziBwIipvjnFvINBcHJiHyiWE/C6ucWu6Fhtv9PbtkuSW2h2wjgCwO0Zcw==
+"@desig/core@^0.0.26":
+  version "0.0.26"
+  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.26.tgz#e9f255e06a79801a02e94ac6051051a4f400283b"
+  integrity sha512-1j6TRfhy6yBRaTiMT/1kmKG6KixjERgkw6As/m2BN+SI830KoIZp1wfIA1me3UhRAO+E7TjZnow5/IoZLtahBQ==
   dependencies:
     "@noble/ed25519" "^1.7.1"
     "@noble/hashes" "^1.1.5"
     "@noble/secp256k1" "^1.7.0"
-    "@solana/web3.js" "^1.62.1"
     bn.js "^5.2.1"
     bs58 "^5.0.0"
 
@@ -274,7 +273,7 @@
   dependencies:
     buffer "~6.0.3"
 
-"@solana/web3.js@^1.62.1", "@solana/web3.js@^1.73.0":
+"@solana/web3.js@^1.73.0":
   version "1.73.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.73.0.tgz#c65f9f954ac80fca6952765c931dd72e57e1b572"
   integrity sha512-YrgX3Py7ylh8NYkbanoINUPCj//bWUjYZ5/WPy9nQ9SK3Cl7QWCR+NmbDjmC/fTspZGR+VO9LTQslM++jr5PRw==

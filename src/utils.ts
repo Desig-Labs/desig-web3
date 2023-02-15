@@ -2,6 +2,7 @@ import {
   CryptoScheme,
   CryptoSys,
   ECCurve,
+  ECTSS,
   ECUtil,
   EdCurve,
   EdTSS,
@@ -58,11 +59,13 @@ export const getCurve = (cryptosys: CryptoSys): Curve => {
   }
 }
 
-export type TSS = typeof EdTSS
+export type TSS = typeof EdTSS | typeof ECTSS
 export const getTSS = (cryptosys: CryptoSys): TSS => {
   switch (cryptosys) {
     case CryptoSys.EdDSA:
       return EdTSS
+    case CryptoSys.ECDSA:
+      return ECTSS
     default:
       throw new Error('Unsuppported crypto system.')
   }
