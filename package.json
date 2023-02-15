@@ -1,13 +1,13 @@
 {
   "name": "@desig/web3",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "The Decentralized Signature",
   "homepage": "https://web3.desig.io/",
   "keywords": [
     "blockchain",
     "multisig",
     "multichain",
-    "chain-neutral",
+    "blockchain-agnostic",
     "smartcontractless",
     "layer0"
   ],
