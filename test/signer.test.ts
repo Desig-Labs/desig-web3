@@ -16,8 +16,8 @@ describe('signer', () => {
     expect(masterkey).equal(id)
   })
 
-  it('get authorization', async () => {
-    const authorization = await alice.authorize()
-    expect(authorization).not.empty
+  it('activate signer', async () => {
+    const { nonce } = await alice.activate()
+    expect(nonce).not.empty
   })
 })

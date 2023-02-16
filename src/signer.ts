@@ -1,4 +1,4 @@
-import { decode, encode } from 'bs58'
+import { encode } from 'bs58'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import { MultisigEntity } from './multisig'
@@ -24,20 +24,6 @@ export class Signer extends Connection {
   }
 
   /**
-   * Build the nonce authorization header
-   * @returns Authorization header
-   */
-  authorize = async () => {
-    const { nonce } = await this.fetch()
-    if (!nonce) return ''
-    const sig = await this.keypair.sign(decode(nonce))
-    const credentials = Buffer.from(`${this.id}:${encode(sig)}`).toString(
-      'base64',
-    )
-    return `Basic ${credentials}`
-  }
-
-  /**
    * Fetch signer data
    * @returns Signer data
    */
@@ -53,7 +39,7 @@ export class Signer extends Connection {
    * @returns Signer data
    */
   activate = async (): Promise<SignerEntiry> => {
-    const authorization = await this.authorize()
+    const authorization = await this.getAuthorization()
     const { data } = await this.connection.get<SignerEntiry>(
       '/signer/activate',
       {
