@@ -53,7 +53,15 @@ export class Signer extends Connection {
    * @returns Signer data
    */
   activate = async (): Promise<SignerEntiry> => {
-    const { data } = await this.connection.get<SignerEntiry>('/signer/activate')
+    const authorization = await this.authorize()
+    const { data } = await this.connection.get<SignerEntiry>(
+      '/signer/activate',
+      {
+        headers: {
+          authorization,
+        },
+      },
+    )
     return data
   }
 }
