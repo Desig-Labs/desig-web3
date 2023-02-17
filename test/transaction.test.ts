@@ -27,7 +27,7 @@ describe('transaction', () => {
   it('initialize transaction', async () => {
     const message = tx.serializeMessage()
     const txId = Transaction.deriveTxId(message)
-    const { msg, id } = await alice.initialize({ message })
+    const { msg, id } = await alice.initializeTransaction({ message })
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
@@ -35,7 +35,7 @@ describe('transaction', () => {
   it('fetch transaction', async () => {
     const message = tx.serializeMessage()
     const txId = Transaction.deriveTxId(message)
-    const { id, msg } = await alice.fetch(txId)
+    const { id, msg } = await alice.getTransaction(txId)
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
@@ -43,7 +43,7 @@ describe('transaction', () => {
   it('approve transaction by alice', async () => {
     const message = tx.serializeMessage()
     const txId = Transaction.deriveTxId(message)
-    const { msg, id } = await alice.approve(txId)
+    const { msg, id } = await alice.approveTransaction(txId)
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
@@ -51,7 +51,7 @@ describe('transaction', () => {
   it('approve transaction by bob', async () => {
     const message = tx.serializeMessage()
     const txId = Transaction.deriveTxId(message)
-    const { msg, id } = await bob.approve(txId)
+    const { msg, id } = await bob.approveTransaction(txId)
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
@@ -59,8 +59,8 @@ describe('transaction', () => {
   it('finalize/verify/submit transaction', async () => {
     const message = tx.serializeMessage()
     const txId = Transaction.deriveTxId(message)
-    const sig = await bob.finalize(txId)
-    const ok = await bob.verify(txId, sig)
+    const sig = await bob.finalizeSignature(txId)
+    const ok = await bob.verifySignature(txId, sig)
     tx.addSignature(masterkey, Buffer.from(decode(sig)))
     const txHash = await sendAndConfirm(tx)
     print(solscan(txHash))

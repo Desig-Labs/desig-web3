@@ -44,14 +44,28 @@ export class Transaction extends Connection {
   static deriveTxId = (msg: Uint8Array): string => encode(sha512(msg))
 
   /**
-   * Fetch transaction data. Note that it's only about multisig info.
+   * Get transactions data. Note that it's only about multisig info.
    * @param id Transaction id
    * @returns Transaction data
    */
-  fetch = async (id?: string): Promise<TransactionEntity> => {
+  getTransactions = async (): Promise<TransactionEntity[]> => {
+    const authorization = await this.getAuthorization()
+    const { data } = await this.connection.get<TransactionEntity[]>(
+      '/transaction',
+      { headers: { authorization } },
+    )
+    return data
+  }
+
+  /**
+   * Get a transaction data. Note that it's only about multisig info.
+   * @param id Transaction id
+   * @returns Transaction data
+   */
+  getTransaction = async (id: string): Promise<TransactionEntity> => {
     const authorization = await this.getAuthorization()
     const { data } = await this.connection.get<TransactionEntity>(
-      id ? `/transaction/${id}` : '/transaction',
+      `/transaction/${id}`,
       { headers: { authorization } },
     )
     return data
@@ -62,7 +76,7 @@ export class Transaction extends Connection {
    * @param message Mesage buffer
    * @returns Transaction data
    */
-  initialize = async ({
+  initializeTransaction = async ({
     message,
   }: {
     message: Uint8Array
@@ -87,8 +101,8 @@ export class Transaction extends Connection {
    * @param id Transaction id
    * @returns Transaction data
    */
-  approve = async (id: string): Promise<TransactionEntity> => {
-    const { msg, signatures, R } = await this.fetch(id)
+  approveTransaction = async (id: string): Promise<TransactionEntity> => {
+    const { msg, signatures, R } = await this.getTransaction(id)
     const { randomness } = signatures.find(
       ({ signer: { id } }) => id === encode(this.keypair.pubkey),
     )
@@ -114,14 +128,14 @@ export class Transaction extends Connection {
    * @param id Transaction id
    * @returns Master signature
    */
-  finalize = async (id: string): Promise<string> => {
+  finalizeSignature = async (id: string): Promise<string> => {
     const curve = getCurve(this.keypair.cryptosys)
     const tss = getTSS(this.keypair.cryptosys)
     const secretSharing = new SecretSharing(curve.ff.r)
     let {
       signatures,
       multisig: { t },
-    } = await this.fetch(id)
+    } = await this.getTransaction(id)
     signatures = signatures.filter(({ signature }) => !!signature)
     if (signatures.length < t)
       throw new Error(
@@ -154,8 +168,8 @@ export class Transaction extends Connection {
    * @param signature Master signature
    * @returns true/false
    */
-  verify = async (id: string, signature: string) => {
-    const { msg } = await this.fetch(id)
+  verifySignature = async (id: string, signature: string) => {
+    const { msg } = await this.getTransaction(id)
     const tss = getTSS(this.keypair.cryptosys)
     return tss.verify(decode(msg), decode(signature), this.keypair.masterkey)
   }
