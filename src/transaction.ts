@@ -48,10 +48,10 @@ export class Transaction extends Connection {
    * @param id Transaction id
    * @returns Transaction data
    */
-  fetch = async (id: string): Promise<TransactionEntity> => {
+  fetch = async (id?: string): Promise<TransactionEntity> => {
     const authorization = await this.getAuthorization()
     const { data } = await this.connection.get<TransactionEntity>(
-      `/transaction/${id}`,
+      id ? `/transaction/${id}` : '/transaction',
       { headers: { authorization } },
     )
     return data

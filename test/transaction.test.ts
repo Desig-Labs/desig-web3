@@ -63,9 +63,9 @@ describe('transaction', () => {
     const ok = await bob.verify(txId, sig)
     tx.addSignature(masterkey, Buffer.from(decode(sig)))
     const txHash = await sendAndConfirm(tx)
+    print(solscan(txHash))
     expect(sig).not.empty
     expect(ok).to.be.true
     expect(txHash).not.empty
-    print(solscan(txHash))
   })
 })
