@@ -18,54 +18,58 @@ describe('transaction', () => {
   const alice = new Transaction(cluster, aliceKeypair)
   const bob = new Transaction(cluster, bobKeypair)
   const masterkey = new PublicKey(aliceKeypair.masterkey)
-  let tx: SolTransaction
-
-  before(async () => {
-    tx = await transfer(masterkey)
-  })
+  let txId: string
 
   it('initialize transaction', async () => {
-    const message = tx.serializeMessage()
-    const txId = Transaction.deriveTxId(message)
-    const { msg, id } = await alice.initializeTransaction({ message })
-    expect(msg).equal(encode(message))
+    const tx = await transfer(masterkey)
+    const raw = tx.serialize({ verifySignatures: false })
+    const msg = tx.serializeMessage()
+    txId = Transaction.deriveTxId(msg)
+    const { msg: message, id } = await alice.initializeTransaction({ msg, raw })
+    expect(message).equal(encode(msg))
     expect(txId).equal(id)
   })
 
   it('fetch transaction', async () => {
+    const { id, msg, raw } = await alice.getTransaction(txId)
+    const tx = SolTransaction.from(decode(raw))
     const message = tx.serializeMessage()
-    const txId = Transaction.deriveTxId(message)
-    const { id, msg } = await alice.getTransaction(txId)
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
 
+  it('fetch transactions', async () => {
+    const transactions = await alice.getTransactions({})
+    expect(transactions.length).is.greaterThan(0)
+  })
+
   it('approve transaction by alice', async () => {
-    const message = tx.serializeMessage()
-    const txId = Transaction.deriveTxId(message)
-    const { msg, id } = await alice.approveTransaction(txId)
-    expect(msg).equal(encode(message))
+    const { id } = await alice.approveTransaction(txId)
     expect(txId).equal(id)
   })
 
   it('approve transaction by bob', async () => {
-    const message = tx.serializeMessage()
-    const txId = Transaction.deriveTxId(message)
-    const { msg, id } = await bob.approveTransaction(txId)
-    expect(msg).equal(encode(message))
+    const { id } = await bob.approveTransaction(txId)
     expect(txId).equal(id)
   })
 
   it('finalize/verify/submit transaction', async () => {
-    const message = tx.serializeMessage()
-    const txId = Transaction.deriveTxId(message)
+    // Finalize the transaction
     const sig = await bob.finalizeSignature(txId)
+    expect(sig).not.empty
+    // Verify the transaction
     const ok = await bob.verifySignature(txId, sig)
+    expect(ok).to.be.true
+    // Reconstruct the transaction
+    const { msg, raw } = await alice.getTransaction(txId)
+    const tx = SolTransaction.from(decode(raw))
+    const message = tx.serializeMessage()
+    expect(msg).equal(encode(message))
+    // Add the signature
     tx.addSignature(masterkey, Buffer.from(decode(sig)))
+    // Submit the transaction
     const txHash = await sendAndConfirm(tx)
     print(solscan(txHash))
-    expect(sig).not.empty
-    expect(ok).to.be.true
     expect(txHash).not.empty
   })
 })

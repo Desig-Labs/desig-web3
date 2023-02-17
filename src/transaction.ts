@@ -24,6 +24,7 @@ export type TransactionEntity = {
   multisig: MultisigEntity
   signatures: SignatureEntity[]
   msg: string
+  raw: string
   R: string
   createdAt: Date
   updatedAt: Date
@@ -78,22 +79,25 @@ export class Transaction extends Connection {
 
   /**
    * Submit a transaction to desig cluster
-   * @param message Mesage buffer
+   * @param raw Raw message
+   * @param msg Message buffer (The sign data)
    * @returns Transaction data
    */
   initializeTransaction = async ({
-    message,
+    raw,
+    msg,
   }: {
-    message: Uint8Array
+    raw: Uint8Array
+    msg: Uint8Array
   }): Promise<TransactionEntity> => {
     const multisigId = encode(this.keypair.masterkey)
-    const msg = encode(message)
     const authorization = await this.getAuthorization()
     const { data } = await this.connection.post<TransactionEntity>(
       '/transaction',
       {
         multisigId,
-        msg,
+        msg: encode(msg),
+        raw: encode(raw),
       },
       { headers: { authorization } },
     )
