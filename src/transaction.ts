@@ -7,6 +7,7 @@ import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import { MultisigEntity } from './multisig'
 import { SignerEntiry } from './signer'
+import { PaginationParams } from './types'
 import { getCurve, getTSS } from './utils'
 
 export type SignatureEntity = {
@@ -52,13 +53,10 @@ export class Transaction extends Connection {
   getTransactions = async ({
     offset = 0,
     limit = 500,
-  }: {
-    offset?: number
-    limit?: number
-  }): Promise<TransactionEntity[]> => {
+  }: Partial<PaginationParams>): Promise<TransactionEntity[]> => {
     const authorization = await this.getAuthorization()
     const { data } = await this.connection.get<TransactionEntity[]>(
-      '/transaction',
+      `/transaction?limit=${limit}&offset=${offset}`,
       { headers: { authorization } },
     )
     return data

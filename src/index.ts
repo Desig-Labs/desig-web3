@@ -1,3 +1,4 @@
+export * from './types'
 export * from './keypair'
 export * from './utils'
 export * from './connection'
