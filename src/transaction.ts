@@ -45,10 +45,17 @@ export class Transaction extends Connection {
 
   /**
    * Get transactions data. Note that it's only about multisig info.
-   * @param id Transaction id
+   * @param pagination.limit Limit
+   * @param pagination.offset Offset
    * @returns Transaction data
    */
-  getTransactions = async (): Promise<TransactionEntity[]> => {
+  getTransactions = async ({
+    offset = 0,
+    limit = 500,
+  }: {
+    offset?: number
+    limit?: number
+  }): Promise<TransactionEntity[]> => {
     const authorization = await this.getAuthorization()
     const { data } = await this.connection.get<TransactionEntity[]>(
       '/transaction',
