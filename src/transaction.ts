@@ -55,10 +55,10 @@ export class Transaction extends Connection {
     offset = 0,
     limit = 500,
   }: Partial<PaginationParams>): Promise<TransactionEntity[]> => {
-    const authorization = await this.getAuthorization()
+    const Authorization = await this.getAuthorization()
     const { data } = await this.connection.get<TransactionEntity[]>(
       `/transaction?limit=${limit}&offset=${offset}`,
-      { headers: { authorization } },
+      { headers: { Authorization } },
     )
     return data
   }
@@ -69,10 +69,10 @@ export class Transaction extends Connection {
    * @returns Transaction data
    */
   getTransaction = async (id: string): Promise<TransactionEntity> => {
-    const authorization = await this.getAuthorization()
+    const Authorization = await this.getAuthorization()
     const { data } = await this.connection.get<TransactionEntity>(
       `/transaction/${id}`,
-      { headers: { authorization } },
+      { headers: { Authorization } },
     )
     return data
   }
@@ -91,7 +91,7 @@ export class Transaction extends Connection {
     msg: Uint8Array
   }): Promise<TransactionEntity> => {
     const multisigId = encode(this.keypair.masterkey)
-    const authorization = await this.getAuthorization()
+    const Authorization = await this.getAuthorization()
     const { data } = await this.connection.post<TransactionEntity>(
       '/transaction',
       {
@@ -99,7 +99,7 @@ export class Transaction extends Connection {
         msg: encode(msg),
         raw: encode(raw),
       },
-      { headers: { authorization } },
+      { headers: { Authorization } },
     )
     return data
   }
@@ -123,11 +123,11 @@ export class Transaction extends Connection {
       decode(randomness).subarray(32),
       this.keypair.privkey,
     )
-    const authorization = await this.getAuthorization()
+    const Authorization = await this.getAuthorization()
     const { data } = await this.connection.patch<TransactionEntity>(
       `/transaction/${id}`,
       { signature: encode(signature) },
-      { headers: { authorization } },
+      { headers: { Authorization } },
     )
     return data
   }
