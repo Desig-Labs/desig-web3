@@ -30,7 +30,7 @@ describe('transaction', () => {
     expect(txId).equal(id)
   })
 
-  it('fetch transaction', async () => {
+  it('get transaction', async () => {
     const { id, msg, raw } = await alice.getTransaction(txId)
     const tx = SolTransaction.from(decode(raw))
     const message = tx.serializeMessage()
@@ -38,7 +38,7 @@ describe('transaction', () => {
     expect(txId).equal(id)
   })
 
-  it('fetch transactions', async () => {
+  it('get transactions', async () => {
     const transactions = await alice.getTransactions({})
     expect(transactions.length).is.greaterThan(0)
   })

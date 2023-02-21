@@ -14,20 +14,17 @@ export type SignerEntiry = {
 export class Signer extends Connection {
   public readonly id: string
 
-  constructor(
-    cluster: string,
-    keypair?: DesigEdDSAKeypair | DesigECDSAKeypair,
-  ) {
+  constructor(cluster: string, keypair: DesigEdDSAKeypair | DesigECDSAKeypair) {
     super(cluster, keypair)
 
     this.id = encode(this.keypair.pubkey)
   }
 
   /**
-   * Fetch signer data
+   * Get signer data
    * @returns Signer data
    */
-  fetch = async (): Promise<SignerEntiry> => {
+  getSigner = async (): Promise<SignerEntiry> => {
     const { data } = await this.connection.get<SignerEntiry>(
       `/signer/${this.id}`,
     )
@@ -38,7 +35,7 @@ export class Signer extends Connection {
    * Activate the signer
    * @returns Signer data
    */
-  activate = async (): Promise<SignerEntiry> => {
+  activateSigner = async (): Promise<SignerEntiry> => {
     const Authorization = await this.getAuthorization()
     const { data } = await this.connection.get<SignerEntiry>(
       '/signer/activate',

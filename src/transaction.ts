@@ -3,10 +3,11 @@ import { utils } from '@noble/ed25519'
 import { sha512 } from '@noble/hashes/sha512'
 import { BN } from 'bn.js'
 import { decode, encode } from 'bs58'
+import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
-import { MultisigEntity } from './multisig'
-import { SignerEntiry } from './signer'
+import { Multisig, MultisigEntity } from './multisig'
+import { Signer, SignerEntiry } from './signer'
 import { PaginationParams } from './types'
 import { getCurve, getTSS } from './utils'
 
@@ -30,11 +31,21 @@ export type TransactionEntity = {
   updatedAt: Date
 }
 
+export type SignatureEvents = 'insertSignature' | 'updateSignature'
+export type SignatureEventResponse = SignatureEntity & {
+  transaction: Transaction & { multisig: Multisig }
+  signer: Signer
+}
+
+export const SIGNATURE_EVENTS: SignatureEvents[] = [
+  'insertSignature',
+  'updateSignature',
+]
+
 export class Transaction extends Connection {
-  constructor(
-    cluster: string,
-    keypair?: DesigEdDSAKeypair | DesigECDSAKeypair,
-  ) {
+  private socket: Socket
+
+  constructor(cluster: string, keypair: DesigEdDSAKeypair | DesigECDSAKeypair) {
     super(cluster, keypair)
   }
 
@@ -44,6 +55,36 @@ export class Transaction extends Connection {
    * @returns The transaction id
    */
   static deriveTxId = (msg: Uint8Array): string => encode(sha512(msg))
+
+  /**
+   * Initialize a socket
+   */
+  private initSocket = () => {
+    if (this.keypair) {
+      if (!this.socket)
+        this.socket = io(this.cluster, {
+          auth: async (cb) => {
+            const Authorization = await this.getAuthorization()
+            return cb({ Authorization })
+          },
+        })
+      this.socket.emit('multisig')
+    } else this.socket = undefined
+    return this.socket
+  }
+
+  /**
+   * Watch signature changes
+   * @param callback Callback event
+   */
+  watch = (
+    callback: (event: SignatureEvents, data: SignatureEventResponse) => void,
+  ) => {
+    const socket = this.initSocket()
+    SIGNATURE_EVENTS.forEach((event) =>
+      socket.on(event, (res: SignatureEventResponse) => callback(event, res)),
+    )
+  }
 
   /**
    * Get transactions data. Note that it's only about multisig info.

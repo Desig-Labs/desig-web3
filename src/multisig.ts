@@ -1,5 +1,4 @@
 import { Connection } from './connection'
-import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import { SignerEntiry } from './signer'
 import { isEmailAddress } from './utils'
 
@@ -14,11 +13,8 @@ export type MultisigEntity = {
 }
 
 export class Multisig extends Connection {
-  constructor(
-    cluster: string,
-    keypair?: DesigEdDSAKeypair | DesigECDSAKeypair,
-  ) {
-    super(cluster, keypair)
+  constructor(cluster: string) {
+    super(cluster)
   }
 
   /**

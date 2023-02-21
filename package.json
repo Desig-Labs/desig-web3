@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "The Decentralized Signature",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -44,6 +44,7 @@
     "axios": "^1.2.2",
     "bn.js": "^5.2.1",
     "bs58": "^5.0.0",
+    "socket.io-client": "^4.6.1",
     "web3": "^1.8.1"
   },
   "devDependencies": {
