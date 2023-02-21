@@ -7,13 +7,21 @@ import {
   SecretSharing,
 } from '@desig/core'
 import { decode, encode } from 'bs58'
+import BN, { Endianness } from 'bn.js'
 import { parseScheme } from './utils'
+
+export type WalletThreshold = {
+  t: number
+  n: number
+  index: number
+}
 
 export interface WalletAdapter {
   readonly cryptosys: CryptoSys
   pubkey: Uint8Array
   privkey: Uint8Array
 
+  getThreshold: () => WalletThreshold
   getAddress: () => string
   getPublicKey: () => Uint8Array
   getPrivateKey: () => string
@@ -27,6 +35,16 @@ export interface MultisigWalletAdapter extends WalletAdapter {
   index: Uint8Array
   t: Uint8Array
   n: Uint8Array
+}
+
+/**
+ * Convert "small" number
+ * @param a Uint8Array
+ * @param en The endian
+ * @returns Number
+ */
+const toNumber = (a: Uint8Array, en: Endianness = 'le') => {
+  return new BN(a, 16, en).toNumber()
 }
 
 export class DesigEdDSAKeypair implements MultisigWalletAdapter {
@@ -59,6 +77,12 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
     this.privkey = privkey
     this.pubkey = EdUtil.getPublicKey(this.privkey)
   }
+
+  getThreshold = () => ({
+    index: toNumber(this.index),
+    t: toNumber(this.t),
+    n: toNumber(this.n),
+  })
 
   getAddress = () => {
     return encode(this.pubkey)
@@ -121,6 +145,12 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
     this.privkey = privkey
     this.pubkey = ECUtil.getPublicKey(this.privkey)
   }
+
+  getThreshold = () => ({
+    index: toNumber(this.index),
+    t: toNumber(this.t),
+    n: toNumber(this.n),
+  })
 
   getAddress = () => {
     return encode(this.pubkey)

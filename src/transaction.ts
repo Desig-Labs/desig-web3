@@ -15,14 +15,14 @@ export type SignatureEntity = {
   id: number
   signature: string
   randomness: string
-  signer: SignerEntiry
+  signer: Omit<SignerEntiry, 'multisig'>
   createdAt: Date
   updatedAt: Date
 }
 
 export type TransactionEntity = {
   id: string
-  multisig: MultisigEntity
+  multisig: Pick<MultisigEntity, 'id'>
   signatures: SignatureEntity[]
   msg: string
   raw: string
@@ -67,7 +67,7 @@ export class Transaction extends Connection {
             return cb({ Authorization })
           },
         })
-      this.socket.emit('multisig')
+      this.socket.emit('transaction')
     } else this.socket = undefined
     return this.socket
   }
@@ -188,10 +188,8 @@ export class Transaction extends Connection {
     const curve = getCurve(this.keypair.cryptosys)
     const tss = getTSS(this.keypair.cryptosys)
     const secretSharing = new SecretSharing(curve.ff.r)
-    let {
-      signatures,
-      multisig: { t },
-    } = await this.getTransaction(id)
+    const { t } = this.keypair.getThreshold()
+    let { signatures } = await this.getTransaction(id)
     signatures = signatures.filter(({ signature }) => !!signature)
     if (signatures.length < t)
       throw new Error(
