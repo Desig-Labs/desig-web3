@@ -6,8 +6,7 @@ import {
   Transaction,
 } from '@solana/web3.js'
 
-export const cluster = 'http://localhost:10000'
-// export const cluster = 'https://eddsa.desig.dev'
+export const cluster = 'https://eddsa.desig.dev'
 export const aliceSecret =
   'eddsa/4JKKpEK3teGFFbxeTFzScBaYse55mH4LgbtYG3q4BcKv/2AFv15MNPuABCdZq1uf8PCPa2gBYrgjpLxDu1mGCiBkfdqvP3ahydUXYF1YshvsCARgpvgt5wHcghGUfQxghGEf'
 export const bobSecret =
