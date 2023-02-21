@@ -87,6 +87,13 @@ export class Transaction extends Connection {
   }
 
   /**
+   * Unwatch signature changes
+   */
+  unwatch = () => {
+    this.socket.disconnect()
+  }
+
+  /**
    * Get transactions data. Note that it's only about multisig info.
    * @param pagination.limit Limit
    * @param pagination.offset Offset

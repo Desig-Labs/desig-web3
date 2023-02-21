@@ -14,7 +14,10 @@ export type SignerEntiry = {
 export class Signer extends Connection {
   public readonly id: string
 
-  constructor(cluster: string, keypair: DesigEdDSAKeypair | DesigECDSAKeypair) {
+  constructor(
+    cluster: string,
+    keypair?: DesigEdDSAKeypair | DesigECDSAKeypair,
+  ) {
     super(cluster, keypair)
 
     this.id = encode(this.keypair.pubkey)
