@@ -6,8 +6,8 @@ import { decode, encode } from 'bs58'
 import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
-import { Multisig, MultisigEntity } from './multisig'
-import { Signer, SignerEntiry } from './signer'
+import { MultisigEntity } from './multisig'
+import { SignerEntiry } from './signer'
 import { PaginationParams } from './types'
 import { getCurve, getTSS } from './utils'
 
@@ -32,9 +32,8 @@ export type TransactionEntity = {
 }
 
 export type SignatureEvents = 'insertSignature' | 'updateSignature'
-export type SignatureEventResponse = SignatureEntity & {
-  transaction: Transaction & { multisig: Multisig }
-  signer: Signer
+export type SignatureEventResponse = Omit<SignatureEntity, 'signatures'> & {
+  transaction: TransactionEntity
 }
 
 export const SIGNATURE_EVENTS: SignatureEvents[] = [
