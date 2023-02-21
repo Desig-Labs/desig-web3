@@ -32,8 +32,8 @@ export type TransactionEntity = {
 }
 
 export type SignatureEvents = 'insertSignature' | 'updateSignature'
-export type SignatureEventResponse = Omit<SignatureEntity, 'signatures'> & {
-  transaction: TransactionEntity
+export type SignatureEventResponse = SignatureEntity & {
+  transaction: Omit<TransactionEntity, 'signatures'>
 }
 
 export const SIGNATURE_EVENTS: SignatureEvents[] = [
