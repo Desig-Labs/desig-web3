@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "The Decentralized Signature",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -36,7 +36,7 @@
     "node": ">=16 <=18"
   },
   "dependencies": {
-    "@desig/core": "^0.0.26",
+    "@desig/core": "^0.0.30",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",
     "@noble/secp256k1": "^1.7.0",
@@ -48,6 +48,8 @@
     "web3": "^1.8.1"
   },
   "devDependencies": {
+    "@ethereumjs/common": "^3.0.2",
+    "@ethereumjs/tx": "~4.0.2",
     "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",

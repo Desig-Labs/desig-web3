@@ -1,15 +1,9 @@
-import {
-  CryptoScheme,
-  CryptoSys,
-  ECCurve,
-  ECTSS,
-  ECUtil,
-  EdCurve,
-  EdTSS,
-  EdUtil,
-} from '@desig/core'
+import { CryptoScheme, CryptoSys, ECUtil, EdUtil } from '@desig/core'
+import { keccak_256 } from '@noble/hashes/sha3'
+import { Point } from '@noble/secp256k1'
 import { PublicKey } from '@solana/web3.js'
-import web3 from 'web3'
+import { encode } from 'bs58'
+import Web3 from 'web3'
 
 export const parseScheme = (scheme: CryptoScheme | string): CryptoSys => {
   switch (scheme) {
@@ -47,30 +41,6 @@ export const getPubkey = (
   }
 }
 
-export type Curve = typeof ECCurve | typeof EdCurve
-export const getCurve = (cryptosys: CryptoSys): Curve => {
-  switch (cryptosys) {
-    case CryptoSys.EdDSA:
-      return EdCurve
-    case CryptoSys.ECDSA:
-      return ECCurve
-    default:
-      throw new Error('Unsuppported crypto system.')
-  }
-}
-
-export type TSS = typeof EdTSS | typeof ECTSS
-export const getTSS = (cryptosys: CryptoSys): TSS => {
-  switch (cryptosys) {
-    case CryptoSys.EdDSA:
-      return EdTSS
-    case CryptoSys.ECDSA:
-      return ECTSS
-    default:
-      throw new Error('Unsuppported crypto system.')
-  }
-}
-
 /**
  * Validate email address
  * @param email
@@ -90,7 +60,20 @@ export const isEthereumAddress = (
   address: string | undefined,
 ): address is string => {
   if (!address) return false
-  return web3.utils.isAddress(address)
+  return Web3.utils.isAddress(address)
+}
+
+/**
+ * Convert a compressed pubkey to an ethereum address
+ * @param pubkey Compressed pubkey
+ * @returns Ethereum address with checksum
+ */
+export const toEthereumAddress = (pubkey: Uint8Array) => {
+  const point = Point.fromHex(pubkey)
+  const pub = point.toRawBytes().subarray(1)
+  const hash = Web3.utils.bytesToHex([...keccak_256(pub).slice(-20)])
+  const address = Web3.utils.toChecksumAddress(hash)
+  return address
 }
 
 /**
@@ -109,4 +92,13 @@ export const isSolanaAddress = (
   } catch (er) {
     return false
   }
+}
+
+/**
+ * Convert a pubkey to a solana address
+ * @param pubkey Pubkey
+ * @returns Solana address
+ */
+export const toSolanaAddress = (pubkey: Uint8Array) => {
+  return encode(pubkey)
 }

@@ -7,6 +7,7 @@ export type MultisigEntity = {
   t: number
   n: number
   name: string
+  sqrpriv?: string
   signers: SignerEntiry[]
   createdAt: Date
   updatedAt: Date
@@ -22,7 +23,7 @@ export class Multisig extends Connection {
    * @param id Multisig id
    * @returns Multisig data
    */
-  fetch = async (id: string): Promise<MultisigEntity> => {
+  getMultisig = async (id: string): Promise<MultisigEntity> => {
     const { data } = await this.connection.get<MultisigEntity>(
       `/multisig/${id}`,
     )
@@ -37,7 +38,7 @@ export class Multisig extends Connection {
    * @param opt.emails The list of member emails
    * @returns Multisig data
    */
-  initialize = async ({
+  initializeMultisig = async ({
     t,
     n,
     name = '',

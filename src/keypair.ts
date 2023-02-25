@@ -79,9 +79,9 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
   }
 
   getThreshold = () => ({
-    index: toNumber(this.index),
-    t: toNumber(this.t),
-    n: toNumber(this.n),
+    index: toNumber(this.index, 'le'),
+    t: toNumber(this.t, 'le'),
+    n: toNumber(this.n, 'le'),
   })
 
   getAddress = () => {
@@ -147,9 +147,9 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
   }
 
   getThreshold = () => ({
-    index: toNumber(this.index),
-    t: toNumber(this.t),
-    n: toNumber(this.n),
+    index: toNumber(this.index, 'be'),
+    t: toNumber(this.t, 'be'),
+    n: toNumber(this.n, 'be'),
   })
 
   getAddress = () => {

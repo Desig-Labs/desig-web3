@@ -1,4 +1,4 @@
-import { SecretSharing } from '@desig/core'
+import { CryptoSys, ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
 import { utils } from '@noble/ed25519'
 import { sha512 } from '@noble/hashes/sha512'
 import { BN } from 'bn.js'
@@ -6,10 +6,9 @@ import { decode, encode } from 'bs58'
 import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
-import { MultisigEntity } from './multisig'
+import { Multisig, MultisigEntity } from './multisig'
 import { SignerEntiry } from './signer'
 import { PaginationParams } from './types'
-import { getCurve, getTSS } from './utils'
 
 export type SignatureEntity = {
   id: number
@@ -27,6 +26,8 @@ export type TransactionEntity = {
   msg: string
   raw: string
   R: string
+  sqrhz?: string
+  ttl: number
   createdAt: Date
   updatedAt: Date
 }
@@ -158,15 +159,41 @@ export class Transaction extends Connection {
    * @returns Transaction data
    */
   approveTransaction = async (id: string): Promise<TransactionEntity> => {
+    if (this.keypair.cryptosys === CryptoSys.EdDSA)
+      return this.approveEdTransactrion(id)
+    if (this.keypair.cryptosys === CryptoSys.ECDSA)
+      return this.approveEcTransaction(id)
+    throw new Error('Invalid crypto system')
+  }
+  // Approve Ed Transaction
+  private approveEdTransactrion = async (id: string) => {
     const { msg, signatures, R } = await this.getTransaction(id)
     const { randomness } = signatures.find(
       ({ signer: { id } }) => id === encode(this.keypair.pubkey),
     )
-    const tss = getTSS(this.keypair.cryptosys)
-    const signature = tss.sign(
+    const signature = EdTSS.sign(
       decode(msg),
       decode(R),
       this.keypair.masterkey,
+      decode(randomness).subarray(32),
+      this.keypair.privkey,
+    )
+    const Authorization = await this.getAuthorization()
+    const { data } = await this.connection.patch<TransactionEntity>(
+      `/transaction/${id}`,
+      { signature: encode(signature) },
+      { headers: { Authorization } },
+    )
+    return data
+  }
+  // Approve EC Transaction
+  private approveEcTransaction = async (id: string) => {
+    const { signatures, R } = await this.getTransaction(id)
+    const { randomness } = signatures.find(
+      ({ signer: { id } }) => id === encode(this.keypair.pubkey),
+    )
+    const signature = ECTSS.sign(
+      decode(R),
       decode(randomness).subarray(32),
       this.keypair.privkey,
     )
@@ -184,36 +211,65 @@ export class Transaction extends Connection {
    * @param id Transaction id
    * @returns Master signature
    */
-  finalizeSignature = async (id: string): Promise<string> => {
-    const curve = getCurve(this.keypair.cryptosys)
-    const tss = getTSS(this.keypair.cryptosys)
-    const secretSharing = new SecretSharing(curve.ff.r)
+  finalizeSignature = async (
+    id: string,
+  ): Promise<{ sig: string; recv?: number }> => {
     const { t } = this.keypair.getThreshold()
-    let { signatures } = await this.getTransaction(id)
-    signatures = signatures.filter(({ signature }) => !!signature)
+    const tx = await this.getTransaction(id)
+    const signatures = tx.signatures.filter(({ signature }) => !!signature)
     if (signatures.length < t)
       throw new Error(
         `Insufficient number of signatures. Require ${t} but got ${signatures.length}.`,
       )
+    if (this.keypair.cryptosys === CryptoSys.EdDSA)
+      return this.finalizeEdSignature(signatures)
+    if (this.keypair.cryptosys === CryptoSys.ECDSA) {
+      const { msg, R, sqrhz } = tx
+      return this.finalizeEcSignature(signatures, { msg, R, sqrhz })
+    }
+    throw new Error('Invalid crypto system')
+  }
+  // Finalize Ed Signature
+  private finalizeEdSignature = async (signatures: SignatureEntity[]) => {
+    const secretSharing = new SecretSharing(EdTSS.ff.r, 'le')
     const indice = signatures.map(({ signer: { index } }) =>
       new BN(index).toArrayLike(Buffer, 'le', 8),
     )
     const pi = secretSharing.pi(indice)
-    const sigs = signatures.map(({ signature }, i) => {
-      const sig = decode(signature)
-      const R = curve.mulScalar(sig.subarray(0, 32), pi[i])
-      const S = secretSharing.yl(sig.subarray(32), pi[i])
-      return utils.concatBytes(R, S)
-    })
-    return encode(
-      tss.addSig(
-        sigs,
-        new Uint8Array([]),
-        new Uint8Array([]),
-        new Uint8Array([]),
-        new Uint8Array([]),
+    const sigs = signatures.map(({ signature }, i) =>
+      utils.concatBytes(
+        EdCurve.mulScalar(decode(signature).subarray(0, 32), pi[i]),
+        secretSharing.yl(decode(signature).subarray(32), pi[i]),
       ),
     )
+    const sig = EdTSS.addSig(sigs)
+    return { sig: encode(sig) }
+  }
+  // Finalize EC Signature
+  private finalizeEcSignature = async (
+    signatures: SignatureEntity[],
+    { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
+  ) => {
+    const secretSharing = new SecretSharing(ECTSS.ff.r, 'be')
+    const multisig = new Multisig(this.cluster)
+    const multisigId = encode(this.keypair.masterkey)
+    const { sqrpriv } = await multisig.getMultisig(multisigId)
+    if (!sqrpriv) throw new Error('Invalid transaction')
+    const indice = signatures.map(({ signer: { index } }) =>
+      new BN(index).toArrayLike(Buffer, 'be', 8),
+    )
+    const pi = secretSharing.pi(indice)
+    const sigs = signatures.map(({ signature }, i) =>
+      secretSharing.yl(decode(signature), pi[i]),
+    )
+    const [sig, recv] = ECTSS.addSig(
+      sigs,
+      decode(msg),
+      decode(R),
+      decode(sqrpriv),
+      decode(sqrhz),
+    )
+    return { sig: encode(sig), recv }
   }
 
   /**
@@ -224,7 +280,18 @@ export class Transaction extends Connection {
    */
   verifySignature = async (id: string, signature: string) => {
     const { msg } = await this.getTransaction(id)
-    const tss = getTSS(this.keypair.cryptosys)
-    return tss.verify(decode(msg), decode(signature), this.keypair.masterkey)
+    if (this.keypair.cryptosys === CryptoSys.EdDSA)
+      return EdTSS.verify(
+        decode(msg),
+        decode(signature),
+        this.keypair.masterkey,
+      )
+    if (this.keypair.cryptosys === CryptoSys.ECDSA)
+      return ECTSS.verify(
+        decode(msg),
+        decode(signature),
+        this.keypair.masterkey,
+      )
+    throw new Error('Invalid crypto system')
   }
 }
