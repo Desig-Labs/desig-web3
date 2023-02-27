@@ -9,7 +9,7 @@ import {
   toEthereumAddress,
 } from '../dist'
 import { ecdsa, eddsa, print, solscan, etherscan } from './config'
-import { Chain, Common, Hardfork } from '@ethereumjs/common'
+import { Chain, Common } from '@ethereumjs/common'
 import Web3 from 'web3'
 
 describe('eddsa: transaction', () => {
@@ -19,6 +19,10 @@ describe('eddsa: transaction', () => {
   const bob = new Transaction(eddsa.cluster, bobKeypair)
   const masterkey = new PublicKey(aliceKeypair.masterkey)
   let txId: string
+
+  it('sol address', () => {
+    print('master key:', masterkey.toBase58())
+  })
 
   it('initialize transaction', async () => {
     const tx = await eddsa.transfer(masterkey)
@@ -82,6 +86,10 @@ describe('ecdsa: transaction', () => {
   const masterkey = toEthereumAddress(aliceKeypair.masterkey)
   let txId: string
 
+  it('eth address', () => {
+    print('master key:', masterkey)
+  })
+
   it('initialize transaction', async () => {
     const tx = await ecdsa.transfer(masterkey)
     const raw = tx.serialize()
@@ -123,7 +131,7 @@ describe('ecdsa: transaction', () => {
     // Finalize the transaction
     const { sig, recv } = await bob.finalizeSignature(txId)
     expect(sig).not.empty
-    if (recv === undefined) throw 'Invalid recv' // trick for typesafe
+    if (recv === undefined) throw new Error('Invalid recv') // trick for typesafe
     // Verify the transaction
     const ok = await bob.verifySignature(txId, sig)
     expect(ok).to.be.true

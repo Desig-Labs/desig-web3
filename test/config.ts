@@ -5,7 +5,7 @@ import {
   SystemProgram,
   Transaction as SolTransaction,
 } from '@solana/web3.js'
-import { Chain, Common, Hardfork } from '@ethereumjs/common'
+import { Chain, Common } from '@ethereumjs/common'
 import { Transaction as EthTransaction } from '@ethereumjs/tx'
 import Web3 from 'web3'
 
@@ -60,7 +60,6 @@ export const eddsa = {
 export const ecdsa = {
   // Desig
   cluster: 'https://ecdsa.desig.dev',
-  // cluster: 'http://localhost:10000',
   aliceSecret:
     'ecdsa/obYW9zYB2kpC2LkPWtY2NWSbAQCBkm8SdGwjer9opXho/11111117w73KBk3i3nfBqBxxqr85e7XXgqBPApfjiUqNd6TauKPZHmmimqwgc7TqqqGPF3wXrA4As1FuUesL',
   bobSecret:
@@ -71,7 +70,7 @@ export const ecdsa = {
   ),
   transfer: async (payer: string) => {
     const params = {
-      to: '0x76d8B624eFDDd1e9fC4297F82a2689315ac62d82',
+      to: '0x69b84C6cE3a1b130e46a2982B92DA9A04de92aFE',
       value: ecdsa.web3.utils.toHex('1000000000'),
     }
     const nonce = await ecdsa.web3.eth.getTransactionCount(payer)
@@ -79,7 +78,6 @@ export const ecdsa = {
     const gasLimit = await ecdsa.web3.eth.estimateGas(params)
     const common = new Common({
       chain: Chain.Goerli,
-      hardfork: Hardfork.Istanbul,
     })
     const tx = new EthTransaction(
       {
