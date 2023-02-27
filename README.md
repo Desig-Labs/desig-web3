@@ -1,5 +1,7 @@
 # Decentralized Signature | Desig
 
+[![Twitter Follow](https://img.shields.io/twitter/follow/DesigLabs?style=social)](https://twitter.com/DesigLabs)
+
 This library to help clients to interact with the Desig cluster.
 
 ## Installation
@@ -24,8 +26,7 @@ await transaction.approve(...)
 
 ```ts
 import { CryptoSys, Keypair, Multisig } from '@desig/web3'
-const keypair = Keypair.fromSecret({ cryptosys: CryptoSys.EdDSA })
-const multisig = new Multisig(keypair)
+const multisig = new Multisig()
 await multisig.fetch(...)
 ```
 
