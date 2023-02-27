@@ -36,16 +36,23 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@desig/core@^0.0.31":
-  version "0.0.31"
-  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.31.tgz#2a652af6c56c43a8cc33e6e4301faeefaf64c7ae"
-  integrity sha512-f6MB9LFad1HbvcEIylxyuljPs8Mc6NQ2ugksaiJ9G23VTvMsiFJaN1kzkvfpmOfb5E6uHv0FO1ygNZOoCYSxnA==
+"@desig/core@^0.0.32":
+  version "0.0.32"
+  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.0.32.tgz#fdf1292ebdbd9688cb8179d9d6175a110001f9dd"
+  integrity sha512-VzRhKiY5yDhkXneAwKRHE+pyh1vMkbaV9BU8JI8FOwAJrWFb6Og14c5zl2KNuvSaph+2UCGsLEp5+nXbT4s3ZQ==
   dependencies:
     "@noble/ed25519" "^1.7.1"
     "@noble/hashes" "^1.1.5"
     "@noble/secp256k1" "^1.7.0"
     bn.js "^5.2.1"
-    bs58 "^5.0.0"
+
+"@desig/supported-chains@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@desig/supported-chains/-/supported-chains-0.0.5.tgz#57bec250ff98fa7cb863d55878fb70254f0dbd99"
+  integrity sha512-4D9l21iWcBwOqWIYc0d0elM0oR+kXO/FZYu6E6RnmezUX3EH8WWOLA9PUM63w8kOkz7/p3T1BXuyBv+RrjV4og==
+  dependencies:
+    "@ethereumjs/common" "^3.0.2"
+    "@noble/hashes" "^1.2.0"
 
 "@ethereumjs/common@2.5.0":
   version "2.5.0"
@@ -469,7 +476,7 @@
   resolved "https://registry.yarnpkg.com/@noble/ed25519/-/ed25519-1.7.3.tgz#57e1677bf6885354b466c38e2b620c62f45a7123"
   integrity sha512-iR8GBkDt0Q3GyaVcIu7mSsVIqnFbkbRzGLWlvhwunacoLwt4J3swfKhfaM6rN6WY+TBGoYT1GtT1mIh2/jGbRQ==
 
-"@noble/hashes@1.2.0", "@noble/hashes@^1.1.2", "@noble/hashes@^1.1.5", "@noble/hashes@~1.2.0":
+"@noble/hashes@1.2.0", "@noble/hashes@^1.1.2", "@noble/hashes@^1.1.5", "@noble/hashes@^1.2.0", "@noble/hashes@~1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.2.0.tgz#a3150eeb09cc7ab207ebf6d7b9ad311a9bdbed12"
   integrity sha512-FZfhjEDbT5GRswV3C6uvLPHMiVD6lQBmpoX5+eSiPaMTXte/IKqI5dykDxzZB/WBeK/CDuQRBWarPdi3FNY2zQ==

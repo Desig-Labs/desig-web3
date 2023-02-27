@@ -1,31 +1,10 @@
-import { CryptoScheme, CryptoSys, ECUtil, EdUtil } from '@desig/core'
+import { ECUtil, EdUtil } from '@desig/core'
+import { CryptoSys } from '@desig/supported-chains'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { Point } from '@noble/secp256k1'
 import { PublicKey } from '@solana/web3.js'
 import { encode } from 'bs58'
 import Web3 from 'web3'
-
-export const parseScheme = (scheme: CryptoScheme | string): CryptoSys => {
-  switch (scheme) {
-    case 'eddsa':
-      return CryptoSys.EdDSA
-    case 'ecdsa':
-      return CryptoSys.ECDSA
-    default:
-      throw new Error('Invalid desig secret format.')
-  }
-}
-
-export const parseCryptoSys = (cryptosys: CryptoSys | number): CryptoScheme => {
-  switch (cryptosys) {
-    case CryptoSys.EdDSA:
-      return 'eddsa'
-    case CryptoSys.ECDSA:
-      return 'ecdsa'
-    default:
-      throw new Error('Invalid desig secret format.')
-  }
-}
 
 export const getPubkey = (
   cryptosys: CryptoSys,

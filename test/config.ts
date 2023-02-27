@@ -5,9 +5,9 @@ import {
   SystemProgram,
   Transaction as SolTransaction,
 } from '@solana/web3.js'
-import { Chain, Common } from '@ethereumjs/common'
 import { Transaction as EthTransaction } from '@ethereumjs/tx'
 import Web3 from 'web3'
+import { Goerli, SolanaDevnet } from '@desig/supported-chains'
 
 /**
  * EdDSA utils
@@ -20,8 +20,10 @@ export const eddsa = {
   bobSecret:
     'eddsa/4JKKpEK3teGFFbxeTFzScBaYse55mH4LgbtYG3q4BcKv/3KWq19hjnoKJG4LJ71d4R6kZJQ1AMe7eL7tZpLsUD7Uq2rmEra5eGGeCRQWgDvpYtneHzY8qBS58hPjVSpJAviy',
   // Solana
-  connection: new Connection('https://api.devnet.solana.com', 'confirmed'),
+  chain: new SolanaDevnet(),
+  getConnection: () => new Connection(eddsa.chain.rpc, 'confirmed'),
   transfer: async (payer: PublicKey) => {
+    const conn = eddsa.getConnection()
     const tx = new SolTransaction()
     const ix = SystemProgram.transfer({
       fromPubkey: payer,
@@ -30,22 +32,17 @@ export const eddsa = {
     })
     tx.add(ix)
     tx.feePayer = payer
-    tx.recentBlockhash = (
-      await eddsa.connection.getLatestBlockhash('confirmed')
-    ).blockhash
+    tx.recentBlockhash = (await conn.getLatestBlockhash('confirmed')).blockhash
     return tx
   },
   sendAndConfirm: async (tx: SolTransaction) => {
-    const signature = await eddsa.connection.sendRawTransaction(
-      tx.serialize(),
-      {
-        skipPreflight: true,
-        preflightCommitment: 'confirmed',
-      },
-    )
-    const { blockhash, lastValidBlockHeight } =
-      await eddsa.connection.getLatestBlockhash()
-    await eddsa.connection.confirmTransaction({
+    const conn = eddsa.getConnection()
+    const signature = await conn.sendRawTransaction(tx.serialize(), {
+      skipPreflight: true,
+      preflightCommitment: 'confirmed',
+    })
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash()
+    await conn.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
@@ -65,40 +62,38 @@ export const ecdsa = {
   bobSecret:
     'ecdsa/obYW9zYB2kpC2LkPWtY2NWSbAQCBkm8SdGwjer9opXho/1111111EsD5dNV6R6ZzbLdmuAJi6Lz183nhEJod4Yqs9UWP4twVE7tsadFA4iWLqeL8AzVFfQtbr1S5er21U',
   // Ethereum
-  web3: new Web3(
-    'https://goerli.infura.io/v3/783c24a3a364474a8dbed638263dc410',
-  ),
+  chain: new Goerli(),
+  getWeb3: () => new Web3(ecdsa.chain.rpc),
   transfer: async (payer: string) => {
+    const web3 = ecdsa.getWeb3()
+    const chain = new Goerli()
     const params = {
       to: '0x69b84C6cE3a1b130e46a2982B92DA9A04de92aFE',
-      value: ecdsa.web3.utils.toHex('1000000000'),
+      value: web3.utils.toHex('1000000000'),
     }
-    const nonce = await ecdsa.web3.eth.getTransactionCount(payer)
-    const gasPrice = await ecdsa.web3.eth.getGasPrice()
-    const gasLimit = await ecdsa.web3.eth.estimateGas(params)
-    const common = new Common({
-      chain: Chain.Goerli,
-    })
+    const nonce = await web3.eth.getTransactionCount(payer)
+    const gasPrice = await web3.eth.getGasPrice()
+    const gasLimit = await web3.eth.estimateGas(params)
     const tx = new EthTransaction(
       {
         ...params,
-        nonce: ecdsa.web3.utils.toHex(nonce),
-        gasLimit: ecdsa.web3.utils.toHex(gasLimit),
-        gasPrice: ecdsa.web3.utils.toHex(gasPrice),
+        nonce: web3.utils.toHex(nonce),
+        gasLimit: web3.utils.toHex(gasLimit),
+        gasPrice: web3.utils.toHex(gasPrice),
       },
-      { common },
+      { common: chain.getEVMCommon() },
     )
     return tx
   },
   sendAndConfirm: async (signedTx: EthTransaction) => {
+    const web3 = ecdsa.getWeb3()
     const serializedTx = signedTx.serialize()
-    const { transactionHash: txId } =
-      await ecdsa.web3.eth.sendSignedTransaction(
-        ecdsa.web3.utils.bytesToHex([...serializedTx]),
-      )
+    const { transactionHash: txId } = await web3.eth.sendSignedTransaction(
+      web3.utils.bytesToHex([...serializedTx]),
+    )
     while (true) {
-      const { blockNumber } = await ecdsa.web3.eth.getTransactionReceipt(txId)
-      const currentBlockNumber = await ecdsa.web3.eth.getBlockNumber()
+      const { blockNumber } = await web3.eth.getTransactionReceipt(txId)
+      const currentBlockNumber = await web3.eth.getBlockNumber()
       if (currentBlockNumber - blockNumber >= 2) break
       else await asyncWait(5000)
     }

@@ -1,4 +1,5 @@
-import { CryptoSys, ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
+import { ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
+import { CryptoSys } from '@desig/supported-chains'
 import { utils } from '@noble/ed25519'
 import { sha512 } from '@noble/hashes/sha512'
 import { BN } from 'bn.js'

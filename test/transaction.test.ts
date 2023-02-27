@@ -1,3 +1,4 @@
+import { SolanaDevnet, getChain } from '@desig/supported-chains'
 import { PublicKey, Transaction as SolTransaction } from '@solana/web3.js'
 import { Transaction as EthTransaction } from '@ethereumjs/tx'
 import { decode, encode } from 'bs58'
@@ -7,10 +8,8 @@ import {
   DesigEdDSAKeypair,
   Transaction,
   toEthereumAddress,
-  Chain,
 } from '../dist'
 import { ecdsa, eddsa, print, solscan, etherscan } from './config'
-import { Common } from '@ethereumjs/common'
 import Web3 from 'web3'
 
 describe('eddsa: transaction', () => {
@@ -37,11 +36,11 @@ describe('eddsa: transaction', () => {
     } = await alice.initializeTransaction({
       msg,
       raw,
-      chainId: Chain.SolanaDevnet,
+      chainId: eddsa.chain.chainId,
     })
     expect(message).equal(encode(msg))
     expect(txId).equal(id)
-    expect(chainId).equal(Chain.SolanaDevnet)
+    expect(chainId).equal(eddsa.chain.chainId)
   })
 
   it('get transaction', async () => {
@@ -116,15 +115,13 @@ describe('ecdsa: transaction', () => {
     })
     expect(message).equal(encode(msg))
     expect(txId).equal(id)
-    expect(chainId).equal(Chain.Goerli)
+    expect(chainId).equal(tx.common.chainId().toString())
   })
 
   it('get transaction', async () => {
     const { id, msg, raw, chainId } = await alice.getTransaction(txId)
     const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
-      common: new Common({
-        chain: BigInt(chainId),
-      }),
+      common: getChain(chainId).getEVMCommon(),
     })
     const message = tx.getMessageToSign()
     expect(msg).equal(encode(message))
@@ -157,9 +154,7 @@ describe('ecdsa: transaction', () => {
     // Reconstruct the transaction
     const { msg, raw, chainId } = await alice.getTransaction(txId)
     const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
-      common: new Common({
-        chain: BigInt(chainId),
-      }),
+      common: getChain(chainId).getEVMCommon(),
     })
     const message = tx.getMessageToSign()
     expect(msg).equal(encode(message))

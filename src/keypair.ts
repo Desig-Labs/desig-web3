@@ -1,14 +1,7 @@
-import {
-  CryptoSys,
-  ECTSS,
-  ECUtil,
-  EdTSS,
-  EdUtil,
-  SecretSharing,
-} from '@desig/core'
+import { ECTSS, ECUtil, EdTSS, EdUtil, SecretSharing } from '@desig/core'
+import { CryptoSys, toSys } from '@desig/supported-chains'
 import { decode, encode } from 'bs58'
 import BN, { Endianness } from 'bn.js'
-import { parseScheme } from './utils'
 
 export type WalletThreshold = {
   t: number
@@ -59,7 +52,7 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
 
   constructor(secret: string) {
     const [scheme, masterkey, share] = secret.split('/')
-    if (this.cryptosys !== parseScheme(scheme))
+    if (this.cryptosys !== toSys(scheme))
       throw new Error('Invalid desig eddsa keypair')
 
     this.masterkey = decode(masterkey)
@@ -127,8 +120,8 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
 
   constructor(secret: string) {
     const [scheme, masterkey, share] = secret.split('/')
-    if (this.cryptosys !== parseScheme(scheme))
-      throw new Error('Invalid desig eddsa keypair')
+    if (this.cryptosys !== toSys(scheme))
+      throw new Error('Invalid desig ecdsa keypair')
 
     this.masterkey = decode(masterkey)
     const {
