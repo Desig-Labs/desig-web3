@@ -7,9 +7,10 @@ import {
   DesigEdDSAKeypair,
   Transaction,
   toEthereumAddress,
+  Chain,
 } from '../dist'
 import { ecdsa, eddsa, print, solscan, etherscan } from './config'
-import { Chain, Common } from '@ethereumjs/common'
+import { Common } from '@ethereumjs/common'
 import Web3 from 'web3'
 
 describe('eddsa: transaction', () => {
@@ -29,9 +30,18 @@ describe('eddsa: transaction', () => {
     const raw = tx.serialize({ verifySignatures: false })
     const msg = tx.serializeMessage()
     txId = Transaction.deriveTxId(msg)
-    const { msg: message, id } = await alice.initializeTransaction({ msg, raw })
+    const {
+      msg: message,
+      id,
+      chainId,
+    } = await alice.initializeTransaction({
+      msg,
+      raw,
+      chainId: Chain.SolanaDevnet,
+    })
     expect(message).equal(encode(msg))
     expect(txId).equal(id)
+    expect(chainId).equal(Chain.SolanaDevnet)
   })
 
   it('get transaction', async () => {
@@ -95,16 +105,25 @@ describe('ecdsa: transaction', () => {
     const raw = tx.serialize()
     const msg = tx.getMessageToSign()
     txId = Transaction.deriveTxId(msg)
-    const { msg: message, id } = await alice.initializeTransaction({ msg, raw })
+    const {
+      msg: message,
+      id,
+      chainId,
+    } = await alice.initializeTransaction({
+      msg,
+      raw,
+      chainId: tx.common.chainId().toString(),
+    })
     expect(message).equal(encode(msg))
     expect(txId).equal(id)
+    expect(chainId).equal(Chain.Goerli)
   })
 
   it('get transaction', async () => {
-    const { id, msg, raw } = await alice.getTransaction(txId)
+    const { id, msg, raw, chainId } = await alice.getTransaction(txId)
     const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
       common: new Common({
-        chain: Chain.Goerli,
+        chain: BigInt(chainId),
       }),
     })
     const message = tx.getMessageToSign()
@@ -136,19 +155,18 @@ describe('ecdsa: transaction', () => {
     const ok = await bob.verifySignature(txId, sig)
     expect(ok).to.be.true
     // Reconstruct the transaction
-    const { msg, raw } = await alice.getTransaction(txId)
+    const { msg, raw, chainId } = await alice.getTransaction(txId)
     const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
       common: new Common({
-        chain: Chain.Goerli,
+        chain: BigInt(chainId),
       }),
     })
     const message = tx.getMessageToSign()
     expect(msg).equal(encode(message))
     // Add the signature
-    const chainId = tx.common.chainId()
     const r = decode(sig).slice(0, 32)
     const s = Buffer.from(decode(sig).slice(32, 64))
-    const v = BigInt(recv + 35) + chainId * BigInt(2)
+    const v = BigInt(recv + 35) + tx.common.chainId() * BigInt(2)
     const signedTx = EthTransaction.fromTxData({
       ...tx.toJSON(),
       r: BigInt(Web3.utils.bytesToHex([...r])),

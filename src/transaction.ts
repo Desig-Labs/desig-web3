@@ -22,6 +22,7 @@ export type SignatureEntity = {
 export type TransactionEntity = {
   id: string
   multisig: Pick<MultisigEntity, 'id'>
+  chainId: string
   signatures: SignatureEntity[]
   msg: string
   raw: string
@@ -134,9 +135,11 @@ export class Transaction extends Connection {
   initializeTransaction = async ({
     raw,
     msg,
+    chainId,
   }: {
     raw: Uint8Array
     msg: Uint8Array
+    chainId: string
   }): Promise<TransactionEntity> => {
     const multisigId = encode(this.keypair.masterkey)
     const Authorization = await this.getAuthorization()
@@ -146,6 +149,7 @@ export class Transaction extends Connection {
         multisigId,
         msg: encode(msg),
         raw: encode(raw),
+        chainId,
       },
       { headers: { Authorization } },
     )
