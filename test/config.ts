@@ -95,7 +95,7 @@ export const ecdsa = {
     while (true) {
       const { blockNumber } = await web3.eth.getTransactionReceipt(txId)
       const currentBlockNumber = await web3.eth.getBlockNumber()
-      if (currentBlockNumber - blockNumber >= 2) break
+      if (currentBlockNumber >= blockNumber) break
       else await asyncWait(5000)
     }
     return txId
