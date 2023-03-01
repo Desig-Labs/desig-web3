@@ -47,6 +47,7 @@ export const eddsa = {
       blockhash,
       lastValidBlockHeight,
     })
+
     return signature
   },
 }
