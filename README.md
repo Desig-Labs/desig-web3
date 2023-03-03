@@ -42,7 +42,7 @@ const multisig = new Multisig('https://<desig_cluster>')
 const t = 2
 const n = 2
 const name = 'My first DAO'
-const emails = ['<alice email>@gmail.com', '<bob email>@gmail.com']
+const emails = ['<alice_email>@gmail.com', '<bob_email>@gmail.com']
 const { id: multisigId } = await multisig.initializeMultisig({
   t,
   n,
