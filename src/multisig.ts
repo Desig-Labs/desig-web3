@@ -53,15 +53,15 @@ export class Multisig extends Connection {
       throw new Error(`Invalid threshold. Current (t,n)=(${t},${n}).`)
     if (emails.length !== n)
       throw new Error(`Insufficient number of emails. Should be equal to ${n}.`)
+    for (const email of emails)
+      if (!isEmailAddress(email))
+        throw new Error(`Invalid email address: ${email}.`)
     const { data } = await this.connection.post<MultisigEntity>('multisig', {
       t,
       n,
       name,
       emails,
     })
-    for (const email of emails)
-      if (!isEmailAddress(email))
-        throw new Error(`Invalid email address: ${email}.`)
     return data
   }
 }

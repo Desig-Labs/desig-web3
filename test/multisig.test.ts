@@ -8,7 +8,11 @@ describe('eddsa: multisig', () => {
   const t = 2
   const n = 3
   const name = `The Dao #${rand}`
-  const emails = ['dummy@desig.io', 'dummy@desig.dev']
+  const emails = [
+    'dummy@desig.io',
+    'dummy@desig.dev',
+    'dummy@descartes.network',
+  ]
   let multisigId = ''
 
   it('initialize multisig', async () => {
@@ -34,7 +38,11 @@ describe('ecdsa: multisig', () => {
   const t = 2
   const n = 3
   const name = `The Dao #${rand}`
-  const emails = ['dummy@desig.io', 'dummy@desig.dev']
+  const emails = [
+    'dummy@desig.io',
+    'dummy@desig.dev',
+    'dummy@descartes.network',
+  ]
   let multisigId = ''
 
   it('initialize multisig', async () => {
