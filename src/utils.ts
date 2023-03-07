@@ -1,5 +1,6 @@
 import { ECUtil, EdUtil } from '@desig/core'
-import { CryptoSys } from '@desig/supported-chains'
+import { Chain, CryptoSys } from '@desig/supported-chains'
+import { Common } from '@ethereumjs/common'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { Point } from '@noble/secp256k1'
 import { PublicKey } from '@solana/web3.js'
@@ -53,6 +54,16 @@ export const toEthereumAddress = (pubkey: Uint8Array) => {
   const hash = Web3.utils.bytesToHex([...keccak_256(pub).slice(-20)])
   const address = Web3.utils.toChecksumAddress(hash)
   return address
+}
+
+export const getEVMCommon = (chain: Chain) => {
+  if (chain.cryptoSystem === CryptoSys.EdDSA)
+    throw new Error('The chain may be not an EVM-based chain')
+  return Common.custom({
+    name: chain.name,
+    chainId: BigInt(chain.chainId),
+    networkId: BigInt(chain.networkId),
+  })
 }
 
 /**

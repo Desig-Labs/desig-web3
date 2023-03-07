@@ -8,6 +8,7 @@ import {
 import { Transaction as EthTransaction } from '@ethereumjs/tx'
 import Web3 from 'web3'
 import { Goerli, SolanaDevnet } from '@desig/supported-chains'
+import { getEVMCommon } from '../dist'
 
 /**
  * EdDSA utils
@@ -82,7 +83,7 @@ export const ecdsa = {
         gasLimit: web3.utils.toHex(gasLimit),
         gasPrice: web3.utils.toHex(gasPrice),
       },
-      { common: chain.getEVMCommon() },
+      { common: getEVMCommon(chain) },
     )
     return tx
   },

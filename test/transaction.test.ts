@@ -1,4 +1,4 @@
-import { SolanaDevnet, getChain } from '@desig/supported-chains'
+import { getChain } from '@desig/supported-chains'
 import { PublicKey, Transaction as SolTransaction } from '@solana/web3.js'
 import { Transaction as EthTransaction } from '@ethereumjs/tx'
 import { decode, encode } from 'bs58'
@@ -8,6 +8,7 @@ import {
   DesigEdDSAKeypair,
   Transaction,
   toEthereumAddress,
+  getEVMCommon,
 } from '../dist'
 import { ecdsa, eddsa, print, solscan, etherscan } from './config'
 import Web3 from 'web3'
@@ -121,7 +122,7 @@ describe('ecdsa: transaction', () => {
   it('get transaction', async () => {
     const { id, msg, raw, chainId } = await alice.getTransaction(txId)
     const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
-      common: getChain(chainId).getEVMCommon(),
+      common: getEVMCommon(getChain(chainId)),
     })
     const message = tx.getMessageToSign()
     expect(msg).equal(encode(message))
@@ -154,7 +155,7 @@ describe('ecdsa: transaction', () => {
     // Reconstruct the transaction
     const { msg, raw, chainId } = await alice.getTransaction(txId)
     const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
-      common: getChain(chainId).getEVMCommon(),
+      common: getEVMCommon(getChain(chainId)),
     })
     const message = tx.getMessageToSign()
     expect(msg).equal(encode(message))
