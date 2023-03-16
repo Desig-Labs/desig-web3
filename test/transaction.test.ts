@@ -8,9 +8,8 @@ import {
   DesigEdDSAKeypair,
   Transaction,
   toEthereumAddress,
-  getEVMCommon,
 } from '../dist'
-import { ecdsa, eddsa, print, solscan, etherscan } from './config'
+import { ecdsa, eddsa, print, solscan, etherscan, getEVMCommon } from './config'
 import Web3 from 'web3'
 
 describe('eddsa: transaction', () => {
@@ -112,11 +111,11 @@ describe('ecdsa: transaction', () => {
     } = await alice.initializeTransaction({
       msg,
       raw,
-      chainId: tx.common.chainId().toString(),
+      chainId: ecdsa.chain.chainId,
     })
     expect(message).equal(encode(msg))
     expect(txId).equal(id)
-    expect(chainId).equal(tx.common.chainId().toString())
+    expect(chainId).equal(ecdsa.chain.chainId)
   })
 
   it('get transaction', async () => {

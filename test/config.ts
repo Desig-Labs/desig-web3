@@ -7,8 +7,18 @@ import {
 } from '@solana/web3.js'
 import { Transaction as EthTransaction } from '@ethereumjs/tx'
 import Web3 from 'web3'
-import { Goerli, SolanaDevnet } from '@desig/supported-chains'
-import { getEVMCommon } from '../dist'
+import { Chain, CryptoSys, Goerli, SolanaDevnet } from '@desig/supported-chains'
+import { Common } from '@ethereumjs/common'
+
+export const getEVMCommon = (chain: Chain) => {
+  if (chain.cryptoSystem === CryptoSys.EdDSA)
+    throw new Error('The chain may be not an EVM-based chain')
+  return Common.custom({
+    name: chain.name,
+    chainId: BigInt(chain.chainId),
+    networkId: BigInt(chain.networkId),
+  })
+}
 
 /**
  * EdDSA utils
