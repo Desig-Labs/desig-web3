@@ -4,7 +4,7 @@ import { keccak_256 } from '@noble/hashes/sha3'
 import { Point } from '@noble/secp256k1'
 import { PublicKey } from '@solana/web3.js'
 import { encode } from 'bs58'
-import Web3 from 'web3'
+import { hexlify, getAddress, isAddress } from 'ethers'
 
 export const getPubkey = (
   cryptosys: CryptoSys,
@@ -39,7 +39,7 @@ export const isEthereumAddress = (
   address: string | undefined,
 ): address is string => {
   if (!address) return false
-  return Web3.utils.isAddress(address)
+  return isAddress(address)
 }
 
 /**
@@ -50,8 +50,8 @@ export const isEthereumAddress = (
 export const toEthereumAddress = (pubkey: Uint8Array) => {
   const point = Point.fromHex(pubkey)
   const pub = point.toRawBytes().subarray(1)
-  const hash = Web3.utils.bytesToHex([...keccak_256(pub).slice(-20)])
-  const address = Web3.utils.toChecksumAddress(hash)
+  const hash = hexlify(keccak_256(pub).slice(-20))
+  const address = getAddress(hash)
   return address
 }
 

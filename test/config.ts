@@ -5,20 +5,13 @@ import {
   SystemProgram,
   Transaction as SolTransaction,
 } from '@solana/web3.js'
-import { Transaction as EthTransaction } from '@ethereumjs/tx'
-import Web3 from 'web3'
-import { Chain, CryptoSys, Goerli, SolanaDevnet } from '@desig/supported-chains'
-import { Common } from '@ethereumjs/common'
-
-export const getEVMCommon = (chain: Chain) => {
-  if (chain.cryptoSystem === CryptoSys.EdDSA)
-    throw new Error('The chain may be not an EVM-based chain')
-  return Common.custom({
-    name: chain.name,
-    chainId: BigInt(chain.chainId),
-    networkId: BigInt(chain.networkId),
-  })
-}
+import {
+  Transaction as EthTransaction,
+  toBeHex,
+  WebSocketProvider,
+} from 'ethers'
+import { Goerli, SolanaDevnet } from '@desig/supported-chains'
+import { isEthereumAddress } from '../dist'
 
 /**
  * EdDSA utils
@@ -75,37 +68,35 @@ export const ecdsa = {
     'ecdsa/obYW9zYB2kpC2LkPWtY2NWSbAQCBkm8SdGwjer9opXho/1111111EsD5dNV6R6ZzbLdmuAJi6Lz183nhEJod4Yqs9UWP4twVE7tsadFA4iWLqeL8AzVFfQtbr1S5er21U',
   // Ethereum
   chain: new Goerli(),
-  getWeb3: () => new Web3(ecdsa.chain.rpc),
+  getWeb3: () => new WebSocketProvider(ecdsa.chain.rpc),
   transfer: async (payer: string) => {
     const web3 = ecdsa.getWeb3()
     const chain = new Goerli()
     const params = {
       to: '0x69b84C6cE3a1b130e46a2982B92DA9A04de92aFE',
-      value: web3.utils.toHex('1000000000'),
+      value: toBeHex('1000000000'),
     }
-    const nonce = await web3.eth.getTransactionCount(payer)
-    const gasPrice = await web3.eth.getGasPrice()
-    const gasLimit = await web3.eth.estimateGas(params)
-    const tx = new EthTransaction(
-      {
-        ...params,
-        nonce: web3.utils.toHex(nonce),
-        gasLimit: web3.utils.toHex(gasLimit),
-        gasPrice: web3.utils.toHex(gasPrice),
-      },
-      { common: getEVMCommon(chain) },
-    )
+    const nonce = await web3.getTransactionCount(payer)
+    const { gasPrice } = await web3.getFeeData()
+    if (!gasPrice) throw new Error('Invalid gas price')
+    const gasLimit = await web3.estimateGas(params)
+    const tx = EthTransaction.from({
+      ...params,
+      chainId: chain.chainId,
+      nonce,
+      gasLimit: toBeHex(gasLimit),
+      gasPrice: toBeHex(gasPrice),
+    })
     return tx
   },
   sendAndConfirm: async (signedTx: EthTransaction) => {
     const web3 = ecdsa.getWeb3()
-    const serializedTx = signedTx.serialize()
-    const { transactionHash: txId } = await web3.eth.sendSignedTransaction(
-      web3.utils.bytesToHex([...serializedTx]),
-    )
+    const { hash: txId } = await web3.broadcastTransaction(signedTx.serialized)
     while (true) {
-      const { blockNumber } = await web3.eth.getTransactionReceipt(txId)
-      const currentBlockNumber = await web3.eth.getBlockNumber()
+      const currentBlockNumber = await web3.getBlockNumber()
+      const { blockNumber } = (await web3.getTransactionReceipt(txId)) || {
+        blockNumber: currentBlockNumber,
+      }
       if (currentBlockNumber >= blockNumber) break
       else await asyncWait(5000)
     }
@@ -130,18 +121,6 @@ export const print = (...args: any[]) => {
   console.group()
   console.log('\x1b[36m↳\x1b[0m', ...args, '')
   console.groupEnd()
-}
-
-/**
- * Validate Ethereum address
- * @param address Ethereum address
- * @returns true/false
- */
-export const isEthereumAddress = (
-  address: string | undefined,
-): address is string => {
-  if (!address) return false
-  return Web3.utils.isAddress(address)
 }
 
 export const etherscan = (addrOrTx: string, net: string = 'goerli'): string => {

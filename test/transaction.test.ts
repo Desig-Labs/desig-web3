@@ -1,6 +1,4 @@
-import { getChain } from '@desig/supported-chains'
 import { PublicKey, Transaction as SolTransaction } from '@solana/web3.js'
-import { Transaction as EthTransaction } from '@ethereumjs/tx'
 import { decode, encode } from 'bs58'
 import { expect } from 'chai'
 import {
@@ -9,8 +7,8 @@ import {
   Transaction,
   toEthereumAddress,
 } from '../dist'
-import { ecdsa, eddsa, print, solscan, etherscan, getEVMCommon } from './config'
-import Web3 from 'web3'
+import { ecdsa, eddsa, print, solscan, etherscan } from './config'
+import { Transaction as EthTransaction, hexlify, getBytes } from 'ethers'
 
 describe('eddsa: transaction', () => {
   const aliceKeypair = new DesigEdDSAKeypair(eddsa.aliceSecret)
@@ -101,8 +99,8 @@ describe('ecdsa: transaction', () => {
 
   it('initialize transaction', async () => {
     const tx = await ecdsa.transfer(masterkey)
-    const raw = tx.serialize()
-    const msg = tx.getMessageToSign()
+    const raw = getBytes(tx.unsignedSerialized)
+    const msg = getBytes(tx.unsignedHash)
     txId = Transaction.deriveTxId(msg)
     const {
       msg: message,
@@ -119,11 +117,9 @@ describe('ecdsa: transaction', () => {
   })
 
   it('get transaction', async () => {
-    const { id, msg, raw, chainId } = await alice.getTransaction(txId)
-    const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
-      common: getEVMCommon(getChain(chainId)),
-    })
-    const message = tx.getMessageToSign()
+    const { id, msg, raw } = await alice.getTransaction(txId)
+    const tx = EthTransaction.from(hexlify(decode(raw)))
+    const message = getBytes(tx.unsignedHash)
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
@@ -153,20 +149,20 @@ describe('ecdsa: transaction', () => {
     expect(ok).to.be.true
     // Reconstruct the transaction
     const { msg, raw, chainId } = await alice.getTransaction(txId)
-    const tx = EthTransaction.fromSerializedTx(Buffer.from(decode(raw)), {
-      common: getEVMCommon(getChain(chainId)),
-    })
-    const message = tx.getMessageToSign()
+    const tx = EthTransaction.from(hexlify(decode(raw)))
+    const message = getBytes(tx.unsignedHash)
     expect(msg).equal(encode(message))
     // Add the signature
     const r = decode(sig).slice(0, 32)
     const s = Buffer.from(decode(sig).slice(32, 64))
-    const v = BigInt(recv + 35) + tx.common.chainId() * BigInt(2)
-    const signedTx = EthTransaction.fromTxData({
+    const v = BigInt(recv + 35) + BigInt(chainId) * BigInt(2)
+    const signedTx = EthTransaction.from({
       ...tx.toJSON(),
-      r: BigInt(Web3.utils.bytesToHex([...r])),
-      s: BigInt(Web3.utils.bytesToHex([...s])),
-      v,
+      signature: {
+        r: BigInt(hexlify(r)),
+        s: BigInt(hexlify(s)),
+        v,
+      },
     })
     // Submit the transaction
     const txHash = await ecdsa.sendAndConfirm(signedTx)
