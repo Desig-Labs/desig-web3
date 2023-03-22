@@ -11,7 +11,7 @@ import { Multisig, MultisigEntity } from './multisig'
 import { SignerEntiry } from './signer'
 import { PaginationParams } from './types'
 
-export type SignatureEntity = {
+export type ApprovalEntity = {
   id: number
   signature: string
   randomness: string
@@ -20,11 +20,11 @@ export type SignatureEntity = {
   updatedAt: Date
 }
 
-export type TransactionEntity = {
+export type ProposalEntity = {
   id: string
   multisig: Pick<MultisigEntity, 'id'>
   chainId: string
-  signatures: SignatureEntity[]
+  approvals: ApprovalEntity[]
   msg: string
   raw: string
   R: string
@@ -34,17 +34,17 @@ export type TransactionEntity = {
   updatedAt: Date
 }
 
-export type SignatureEvents = 'insertSignature' | 'updateSignature'
-export type SignatureEventResponse = SignatureEntity & {
-  transaction: Omit<TransactionEntity, 'signatures'>
+export type ApprovalEvents = 'insertApproval' | 'updateSignature'
+export type ApprovalEventResponse = ApprovalEntity & {
+  proposal: Omit<ProposalEntity, 'approvals'>
 }
 
-export const SIGNATURE_EVENTS: SignatureEvents[] = [
-  'insertSignature',
+export const APPROVAL_EVENTS: ApprovalEvents[] = [
+  'insertApproval',
   'updateSignature',
 ]
 
-export class Transaction extends Connection {
+export class Proposal extends Connection {
   private socket: Socket
 
   constructor(cluster: string, keypair: DesigEdDSAKeypair | DesigECDSAKeypair) {
@@ -52,9 +52,9 @@ export class Transaction extends Connection {
   }
 
   /**
-   * Derive the transaction id by its content
-   * @param msg Transaction's content (Or message)
-   * @returns The transaction id
+   * Derive the proposal id by its content
+   * @param msg Proposal's content (Or message)
+   * @returns The proposal id
    */
   static deriveTxId = (msg: Uint8Array): string => encode(sha512(msg))
 
@@ -70,70 +70,70 @@ export class Transaction extends Connection {
             return cb({ Authorization })
           },
         })
-      this.socket.emit('transaction')
+      this.socket.emit('proposal')
     } else this.socket = undefined
     return this.socket
   }
 
   /**
-   * Watch signature changes
+   * Watch approval changes
    * @param callback Callback event
    */
   watch = (
-    callback: (event: SignatureEvents, data: SignatureEventResponse) => void,
+    callback: (event: ApprovalEvents, data: ApprovalEventResponse) => void,
   ) => {
     const socket = this.initSocket()
-    SIGNATURE_EVENTS.forEach((event) =>
-      socket.on(event, (res: SignatureEventResponse) => callback(event, res)),
+    APPROVAL_EVENTS.forEach((event) =>
+      socket.on(event, (res: ApprovalEventResponse) => callback(event, res)),
     )
   }
 
   /**
-   * Unwatch signature changes
+   * Unwatch approval changes
    */
   unwatch = () => {
     this.socket.disconnect()
   }
 
   /**
-   * Get transactions data. Note that it's only about multisig info.
+   * Get proposals data. Note that it's only about multisig info.
    * @param pagination.limit Limit
    * @param pagination.offset Offset
-   * @returns Transaction data
+   * @returns Proposal data
    */
-  getTransactions = async ({
+  getProposals = async ({
     offset = 0,
     limit = 500,
-  }: Partial<PaginationParams>): Promise<TransactionEntity[]> => {
+  }: Partial<PaginationParams>): Promise<ProposalEntity[]> => {
     const Authorization = await this.getAuthorization()
-    const { data } = await this.connection.get<TransactionEntity[]>(
-      `/transaction?limit=${limit}&offset=${offset}`,
+    const { data } = await this.connection.get<ProposalEntity[]>(
+      `/proposal?limit=${limit}&offset=${offset}`,
       { headers: { Authorization } },
     )
     return data
   }
 
   /**
-   * Get a transaction data. Note that it's only about multisig info.
-   * @param id Transaction id
-   * @returns Transaction data
+   * Get a prposal data. Note that it's only about multisig info.
+   * @param id Proposal id
+   * @returns Proposal data
    */
-  getTransaction = async (id: string): Promise<TransactionEntity> => {
+  getProposal = async (id: string): Promise<ProposalEntity> => {
     const Authorization = await this.getAuthorization()
-    const { data } = await this.connection.get<TransactionEntity>(
-      `/transaction/${id}`,
+    const { data } = await this.connection.get<ProposalEntity>(
+      `/proposal/${id}`,
       { headers: { Authorization } },
     )
     return data
   }
 
   /**
-   * Submit a transaction to desig cluster
+   * Submit a proposal to desig cluster
    * @param raw Raw message
    * @param msg Message buffer (The sign data)
-   * @returns Transaction data
+   * @returns Proposal data
    */
-  initializeTransaction = async ({
+  initializeProposal = async ({
     raw,
     msg,
     chainId,
@@ -141,11 +141,11 @@ export class Transaction extends Connection {
     raw: Uint8Array
     msg: Uint8Array
     chainId: string
-  }): Promise<TransactionEntity> => {
+  }): Promise<ProposalEntity> => {
     const multisigId = encode(this.keypair.masterkey)
     const Authorization = await this.getAuthorization()
-    const { data } = await this.connection.post<TransactionEntity>(
-      '/transaction',
+    const { data } = await this.connection.post<ProposalEntity>(
+      '/proposal',
       {
         multisigId,
         msg: encode(msg),
@@ -158,12 +158,12 @@ export class Transaction extends Connection {
   }
 
   /**
-   * Approve the transaction.
+   * Approve the proposal.
    * You will need to submit the commitment in the 1st round to be able to join the 2nd round of signing.
-   * @param id Transaction id
-   * @returns Transaction data
+   * @param id Proposal id
+   * @returns Proposal data
    */
-  approveTransaction = async (id: string): Promise<TransactionEntity> => {
+  approveProposal = async (id: string): Promise<ProposalEntity> => {
     if (this.keypair.cryptosys === CryptoSys.EdDSA)
       return this.approveEdTransactrion(id)
     if (this.keypair.cryptosys === CryptoSys.ECDSA)
@@ -172,8 +172,8 @@ export class Transaction extends Connection {
   }
   // Approve Ed Transaction
   private approveEdTransactrion = async (id: string) => {
-    const { msg, signatures, R } = await this.getTransaction(id)
-    const { randomness } = signatures.find(
+    const { msg, approvals, R } = await this.getProposal(id)
+    const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.pubkey),
     )
     const signature = EdTSS.sign(
@@ -184,8 +184,8 @@ export class Transaction extends Connection {
       this.keypair.privkey,
     )
     const Authorization = await this.getAuthorization()
-    const { data } = await this.connection.patch<TransactionEntity>(
-      `/transaction/${id}`,
+    const { data } = await this.connection.patch<ProposalEntity>(
+      `/proposal/${id}`,
       { signature: encode(signature) },
       { headers: { Authorization } },
     )
@@ -193,8 +193,8 @@ export class Transaction extends Connection {
   }
   // Approve EC Transaction
   private approveEcTransaction = async (id: string) => {
-    const { signatures, R } = await this.getTransaction(id)
-    const { randomness } = signatures.find(
+    const { approvals, R } = await this.getProposal(id)
+    const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.pubkey),
     )
     const signature = ECTSS.sign(
@@ -203,8 +203,8 @@ export class Transaction extends Connection {
       this.keypair.privkey,
     )
     const Authorization = await this.getAuthorization()
-    const { data } = await this.connection.patch<TransactionEntity>(
-      `/transaction/${id}`,
+    const { data } = await this.connection.patch<ProposalEntity>(
+      `/proposal/${id}`,
       { signature: encode(signature) },
       { headers: { Authorization } },
     )
@@ -212,36 +212,36 @@ export class Transaction extends Connection {
   }
 
   /**
-   * Finalize the partial signatures. The function will combine the partial signatures and construct the valid master signature.
-   * @param id Transaction id
+   * Finalize the partial signatures. The function will combine the partial signatures and construct the valid signature.
+   * @param id Proposal id
    * @returns Master signature
    */
   finalizeSignature = async (
     id: string,
   ): Promise<{ sig: string; recv?: number }> => {
     const { t } = this.keypair.getThreshold()
-    const tx = await this.getTransaction(id)
-    const signatures = tx.signatures.filter(({ signature }) => !!signature)
-    if (signatures.length < t)
+    const tx = await this.getProposal(id)
+    const approvals = tx.approvals.filter(({ signature }) => !!signature)
+    if (approvals.length < t)
       throw new Error(
-        `Insufficient number of signatures. Require ${t} but got ${signatures.length}.`,
+        `Insufficient number of signatures. Require ${t} but got ${approvals.length}.`,
       )
     if (this.keypair.cryptosys === CryptoSys.EdDSA)
-      return this.finalizeEdSignature(signatures)
+      return this.finalizeEdSignature(approvals)
     if (this.keypair.cryptosys === CryptoSys.ECDSA) {
       const { msg, R, sqrhz } = tx
-      return this.finalizeEcSignature(signatures, { msg, R, sqrhz })
+      return this.finalizeEcSignature(approvals, { msg, R, sqrhz })
     }
     throw new Error('Invalid crypto system')
   }
   // Finalize Ed Signature
-  private finalizeEdSignature = async (signatures: SignatureEntity[]) => {
+  private finalizeEdSignature = async (approvals: ApprovalEntity[]) => {
     const secretSharing = new SecretSharing(EdTSS.ff.r, 'le')
-    const indice = signatures.map(({ signer: { index } }) =>
+    const indice = approvals.map(({ signer: { index } }) =>
       new BN(index).toArrayLike(Buffer, 'le', 8),
     )
     const pi = secretSharing.pi(indice)
-    const sigs = signatures.map(({ signature }, i) =>
+    const sigs = approvals.map(({ signature }, i) =>
       utils.concatBytes(
         EdCurve.mulScalar(decode(signature).subarray(0, 32), pi[i]),
         secretSharing.yl(decode(signature).subarray(32), pi[i]),
@@ -252,7 +252,7 @@ export class Transaction extends Connection {
   }
   // Finalize EC Signature
   private finalizeEcSignature = async (
-    signatures: SignatureEntity[],
+    signatures: ApprovalEntity[],
     { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
   ) => {
     const secretSharing = new SecretSharing(ECTSS.ff.r, 'be')
@@ -279,12 +279,12 @@ export class Transaction extends Connection {
 
   /**
    * Verify a master signature
-   * @param id Transaction id
+   * @param id Proposal id
    * @param signature Master signature
    * @returns true/false
    */
   verifySignature = async (id: string, signature: string) => {
-    const { msg } = await this.getTransaction(id)
+    const { msg } = await this.getProposal(id)
     if (this.keypair.cryptosys === CryptoSys.EdDSA)
       return EdTSS.verify(
         decode(msg),

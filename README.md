@@ -15,11 +15,11 @@ yarn add @desig/web3
 ### Interactive Mode
 
 ```ts
-import { Keypair, Transaction } from '@desig/web3'
+import { Keypair, Proposal } from '@desig/web3'
 const secret = 'your secret'
 const keypair = Keypair.fromSecret(secret)
-const transaction = new Transaction(keypair)
-await transaction.approve(...)
+const proposal = new Proposal(keypair)
+await proposal.approve(...)
 ```
 
 ### Read-only Mode
@@ -33,7 +33,8 @@ await multisig.fetch(...)
 ## Example
 
 ```ts
-import { DesigEdDSAKeypair, Multisig, Transaction } from '@desig/web3'
+import { Transaction } from '@solana/web3.js'
+import { DesigEdDSAKeypair, Multisig, Proposal } from '@desig/web3'
 import { transfer, sendAndConfirm } from '<appendix_transfer_solana>'
 import { SolanaDevnet } from '@desig/supported_chains'
 
@@ -55,23 +56,23 @@ const bobKeypair = new DesigEdDSAKeypair('<bob_secret>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
 // Alice initilizes a transaction
-const aliceTx = new Transaction('https://<desig_cluster>', aliceKeypair)
-const bobTx = new Transaction('https://<desig_cluster>', bobKeypair)
+const aliceTx = new Proposal('https://<desig_cluster>', aliceKeypair)
+const bobTx = new Proposal('https://<desig_cluster>', bobKeypair)
 const tx = transfer(masterkey)
 const raw = tx.serialize({ verifySignatures: false })
 const msg = tx.serializeMessage()
-const { id: txId } = await aliceTx.initializeTransaction({
+const { id: txId } = await aliceTx.initializeProposal({
   msg,
   raw,
   chainId: new SolanaDevnet().chainId,
 })
 // Alice approves the transaction
-await aliceTx.approveTransaction(txId)
+await aliceTx.approveProposal(txId)
 // Bob approves the transaction
-await bobTx.approveTransaction(txId)
+await bobTx.approveProposal(txId)
 // Bob finalizes the transaction
 const { sig } = await bobTx.finalizeSignature(txId)
-const { raw } = await bobTx.getTransaction(txId)
+const { raw } = await bobTx.getProposal(txId)
 const signedTx = Transaction.from(decode(raw))
 signedTx.addSignature(masterkey, Buffer.from(decode(sig)))
 // Bob submits the transaction

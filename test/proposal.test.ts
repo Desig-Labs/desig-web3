@@ -4,17 +4,17 @@ import { expect } from 'chai'
 import {
   DesigECDSAKeypair,
   DesigEdDSAKeypair,
-  Transaction,
+  Proposal,
   toEthereumAddress,
 } from '../dist'
 import { ecdsa, eddsa, print, solscan, etherscan } from './config'
 import { Transaction as EthTransaction, hexlify, getBytes } from 'ethers'
 
-describe('eddsa: transaction', () => {
+describe('eddsa: proposal', () => {
   const aliceKeypair = new DesigEdDSAKeypair(eddsa.aliceSecret)
   const bobKeypair = new DesigEdDSAKeypair(eddsa.bobSecret)
-  const alice = new Transaction(eddsa.cluster, aliceKeypair)
-  const bob = new Transaction(eddsa.cluster, bobKeypair)
+  const alice = new Proposal(eddsa.cluster, aliceKeypair)
+  const bob = new Proposal(eddsa.cluster, bobKeypair)
   const masterkey = new PublicKey(aliceKeypair.masterkey)
   let txId: string
 
@@ -22,16 +22,16 @@ describe('eddsa: transaction', () => {
     print('master key:', masterkey.toBase58())
   })
 
-  it('initialize transaction', async () => {
+  it('initialize proposal', async () => {
     const tx = await eddsa.transfer(masterkey)
     const raw = tx.serialize({ verifySignatures: false })
     const msg = tx.serializeMessage()
-    txId = Transaction.deriveTxId(msg)
+    txId = Proposal.deriveTxId(msg)
     const {
       msg: message,
       id,
       chainId,
-    } = await alice.initializeTransaction({
+    } = await alice.initializeProposal({
       msg,
       raw,
       chainId: eddsa.chain.chainId,
@@ -41,38 +41,38 @@ describe('eddsa: transaction', () => {
     expect(chainId).equal(eddsa.chain.chainId)
   })
 
-  it('get transaction', async () => {
-    const { id, msg, raw } = await alice.getTransaction(txId)
+  it('get proposal', async () => {
+    const { id, msg, raw } = await alice.getProposal(txId)
     const tx = SolTransaction.from(decode(raw))
     const message = tx.serializeMessage()
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
 
-  it('get transactions', async () => {
-    const transactions = await alice.getTransactions({})
-    expect(transactions.length).is.greaterThan(0)
+  it('get proposals', async () => {
+    const proposals = await alice.getProposals({})
+    expect(proposals.length).is.greaterThan(0)
   })
 
-  it('approve transaction by alice', async () => {
-    const { id } = await alice.approveTransaction(txId)
+  it('approve proposal by alice', async () => {
+    const { id } = await alice.approveProposal(txId)
     expect(txId).equal(id)
   })
 
-  it('approve transaction by bob', async () => {
-    const { id } = await bob.approveTransaction(txId)
+  it('approve proposal by bob', async () => {
+    const { id } = await bob.approveProposal(txId)
     expect(txId).equal(id)
   })
 
-  it('finalize/verify/submit transaction', async () => {
-    // Finalize the transaction
+  it('finalize/verify/submit proposal', async () => {
+    // Finalize the proposal
     const { sig } = await bob.finalizeSignature(txId)
     expect(sig).not.empty
-    // Verify the transaction
+    // Verify the proposal
     const ok = await bob.verifySignature(txId, sig)
     expect(ok).to.be.true
-    // Reconstruct the transaction
-    const { msg, raw } = await alice.getTransaction(txId)
+    // Reconstruct the proposal
+    const { msg, raw } = await alice.getProposal(txId)
     const tx = SolTransaction.from(decode(raw))
     const message = tx.serializeMessage()
     expect(msg).equal(encode(message))
@@ -85,11 +85,11 @@ describe('eddsa: transaction', () => {
   })
 })
 
-describe('ecdsa: transaction', () => {
+describe('ecdsa: proposal', () => {
   const aliceKeypair = new DesigECDSAKeypair(ecdsa.aliceSecret)
   const bobKeypair = new DesigECDSAKeypair(ecdsa.bobSecret)
-  const alice = new Transaction(ecdsa.cluster, aliceKeypair)
-  const bob = new Transaction(ecdsa.cluster, bobKeypair)
+  const alice = new Proposal(ecdsa.cluster, aliceKeypair)
+  const bob = new Proposal(ecdsa.cluster, bobKeypair)
   const masterkey = toEthereumAddress(aliceKeypair.masterkey)
   let txId: string
 
@@ -97,16 +97,16 @@ describe('ecdsa: transaction', () => {
     print('master key:', masterkey)
   })
 
-  it('initialize transaction', async () => {
+  it('initialize proposal', async () => {
     const tx = await ecdsa.transfer(masterkey)
     const raw = getBytes(tx.unsignedSerialized)
     const msg = getBytes(tx.unsignedHash)
-    txId = Transaction.deriveTxId(msg)
+    txId = Proposal.deriveTxId(msg)
     const {
       msg: message,
       id,
       chainId,
-    } = await alice.initializeTransaction({
+    } = await alice.initializeProposal({
       msg,
       raw,
       chainId: ecdsa.chain.chainId,
@@ -116,39 +116,39 @@ describe('ecdsa: transaction', () => {
     expect(chainId).equal(ecdsa.chain.chainId)
   })
 
-  it('get transaction', async () => {
-    const { id, msg, raw } = await alice.getTransaction(txId)
+  it('get proposal', async () => {
+    const { id, msg, raw } = await alice.getProposal(txId)
     const tx = EthTransaction.from(hexlify(decode(raw)))
     const message = getBytes(tx.unsignedHash)
     expect(msg).equal(encode(message))
     expect(txId).equal(id)
   })
 
-  it('get transactions', async () => {
-    const transactions = await alice.getTransactions({})
-    expect(transactions.length).is.greaterThan(0)
+  it('get proposals', async () => {
+    const proposals = await alice.getProposals({})
+    expect(proposals.length).is.greaterThan(0)
   })
 
-  it('approve transaction by alice', async () => {
-    const { id } = await alice.approveTransaction(txId)
+  it('approve proposal by alice', async () => {
+    const { id } = await alice.approveProposal(txId)
     expect(txId).equal(id)
   })
 
-  it('approve transaction by bob', async () => {
-    const { id } = await bob.approveTransaction(txId)
+  it('approve proposal by bob', async () => {
+    const { id } = await bob.approveProposal(txId)
     expect(txId).equal(id)
   })
 
-  it('finalize/verify/submit transaction', async () => {
-    // Finalize the transaction
+  it('finalize/verify/submit proposal', async () => {
+    // Finalize the proposal
     const { sig, recv } = await bob.finalizeSignature(txId)
     expect(sig).not.empty
     if (recv === undefined) throw new Error('Invalid recv') // trick for typesafe
-    // Verify the transaction
+    // Verify the proposal
     const ok = await bob.verifySignature(txId, sig)
     expect(ok).to.be.true
-    // Reconstruct the transaction
-    const { msg, raw, chainId } = await alice.getTransaction(txId)
+    // Reconstruct the proposal
+    const { msg, raw, chainId } = await alice.getProposal(txId)
     const tx = EthTransaction.from(hexlify(decode(raw)))
     const message = getBytes(tx.unsignedHash)
     expect(msg).equal(encode(message))
