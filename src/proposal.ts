@@ -1,7 +1,7 @@
 import { ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 import { utils } from '@noble/ed25519'
-import { sha512 } from '@noble/hashes/sha512'
+import { keccak_256 } from '@noble/hashes/sha3'
 import { BN } from 'bn.js'
 import { decode, encode } from 'bs58'
 import { io, Socket } from 'socket.io-client'
@@ -56,7 +56,7 @@ export class Proposal extends Connection {
    * @param msg Proposal's content (Or message)
    * @returns The proposal id
    */
-  static deriveTxId = (msg: Uint8Array): string => encode(sha512(msg))
+  static deriveTxId = (msg: Uint8Array): string => encode(keccak_256(msg))
 
   /**
    * Initialize a socket
