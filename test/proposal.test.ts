@@ -26,7 +26,7 @@ describe('eddsa: proposal', () => {
     const tx = await eddsa.transfer(masterkey)
     const raw = tx.serialize({ verifySignatures: false })
     const msg = tx.serializeMessage()
-    txId = Proposal.deriveTxId(msg)
+    txId = Proposal.deriveProposalId(msg)
     const {
       msg: message,
       id,
@@ -101,7 +101,7 @@ describe('ecdsa: proposal', () => {
     const tx = await ecdsa.transfer(masterkey)
     const raw = getBytes(tx.unsignedSerialized)
     const msg = getBytes(tx.unsignedHash)
-    txId = Proposal.deriveTxId(msg)
+    txId = Proposal.deriveProposalId(msg)
     const {
       msg: message,
       id,

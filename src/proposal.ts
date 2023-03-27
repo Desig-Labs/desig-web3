@@ -56,7 +56,7 @@ export class Proposal extends Connection {
    * @param msg Proposal's content (Or message)
    * @returns The proposal id
    */
-  static deriveTxId = (msg: Uint8Array): string => encode(keccak_256(msg))
+  static deriveProposalId = (msg: Uint8Array): string => encode(keccak_256(msg))
 
   /**
    * Initialize a socket
