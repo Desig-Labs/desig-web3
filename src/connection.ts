@@ -69,10 +69,8 @@ export class Connection {
       throw new Error('Cannot run this function with a read-only keypair')
     const nonce = await this.getNonce()
     const sig = await this.keypair.sign(decode(nonce))
-    const credential = Buffer.from(`${this.address}:${encode(sig)}`).toString(
-      'base64',
-    )
-    return `Basic ${credential}`
+    const credential = `${this.address}/${encode(sig)}`
+    return `Bearer ${credential}`
   }
 
   protected getTimestampAuthorization = async () => {

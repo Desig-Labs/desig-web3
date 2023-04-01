@@ -2,6 +2,7 @@ import { ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 import { utils } from '@noble/ed25519'
 import { keccak_256 } from '@noble/hashes/sha3'
+import { concatBytes } from '@noble/hashes/utils'
 import { BN } from 'bn.js'
 import { decode, encode } from 'bs58'
 import { io, Socket } from 'socket.io-client'
@@ -53,10 +54,14 @@ export class Proposal extends Connection {
 
   /**
    * Derive the proposal id by its content
+   * @param multisigId Multisig id
    * @param msg Proposal's content (Or message)
    * @returns The proposal id
    */
-  static deriveProposalId = (msg: Uint8Array): string => encode(keccak_256(msg))
+  static deriveProposalId = (multisigId: string, msg: Uint8Array): string => {
+    const seed = concatBytes(decode(multisigId), msg)
+    return encode(keccak_256(seed))
+  }
 
   /**
    * Initialize a socket
