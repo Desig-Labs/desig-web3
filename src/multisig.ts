@@ -42,25 +42,24 @@ export class Multisig extends Connection {
     t,
     n,
     name = '',
-    emails,
+    pubkeys,
   }: {
     t: number
     n: number
     name?: string
-    emails: string[]
+    pubkeys: string[]
   }): Promise<MultisigEntity> => {
     if (t < 1 || n < 1 || t > n)
       throw new Error(`Invalid threshold. Current (t,n)=(${t},${n}).`)
-    if (emails.length !== n)
-      throw new Error(`Insufficient number of emails. Should be equal to ${n}.`)
-    for (const email of emails)
-      if (!isEmailAddress(email))
-        throw new Error(`Invalid email address: ${email}.`)
+    if (pubkeys.length !== n)
+      throw new Error(
+        `Insufficient number of pubkeys. Should be equal to ${n}.`,
+      )
     const { data } = await this.connection.post<MultisigEntity>('multisig', {
       t,
       n,
       name,
-      emails,
+      pubkeys,
     })
     return data
   }

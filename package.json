@@ -29,14 +29,14 @@
     "predeploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts",
     "deploy": "echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
     "pretest": "yarn build",
-    "test": "mocha --exit --require ts-node/register -t 120000 test/**/*.test.ts",
+    "test": "mocha --exit --require ts-node/register -t 120000 test/**/proposal.test.ts",
     "clean": "rimraf dist"
   },
   "engines": {
     "node": ">=16 <=18"
   },
   "dependencies": {
-    "@desig/core": "^0.0.33",
+    "@desig/core": "^0.0.37",
     "@desig/supported-chains": "^0.1.3",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",

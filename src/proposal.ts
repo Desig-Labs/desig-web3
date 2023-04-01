@@ -48,7 +48,7 @@ export class Proposal extends Connection {
   private socket: Socket
 
   constructor(cluster: string, keypair: DesigEdDSAKeypair | DesigECDSAKeypair) {
-    super(cluster, keypair)
+    super(cluster, { keypair })
   }
 
   /**
@@ -66,7 +66,7 @@ export class Proposal extends Connection {
       if (!this.socket)
         this.socket = io(this.cluster, {
           auth: async (cb) => {
-            const Authorization = await this.getAuthorization()
+            const Authorization = await this.getNonceAuthorization()
             return cb({ Authorization })
           },
         })
@@ -105,7 +105,7 @@ export class Proposal extends Connection {
     offset = 0,
     limit = 500,
   }: Partial<PaginationParams>): Promise<ProposalEntity[]> => {
-    const Authorization = await this.getAuthorization()
+    const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.get<ProposalEntity[]>(
       `/proposal?limit=${limit}&offset=${offset}`,
       { headers: { Authorization } },
@@ -119,7 +119,7 @@ export class Proposal extends Connection {
    * @returns Proposal data
    */
   getProposal = async (id: string): Promise<ProposalEntity> => {
-    const Authorization = await this.getAuthorization()
+    const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.get<ProposalEntity>(
       `/proposal/${id}`,
       { headers: { Authorization } },
@@ -143,7 +143,7 @@ export class Proposal extends Connection {
     chainId: string
   }): Promise<ProposalEntity> => {
     const multisigId = encode(this.keypair.masterkey)
-    const Authorization = await this.getAuthorization()
+    const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.post<ProposalEntity>(
       '/proposal',
       {
@@ -183,7 +183,7 @@ export class Proposal extends Connection {
       decode(randomness).subarray(32),
       this.keypair.privkey,
     )
-    const Authorization = await this.getAuthorization()
+    const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.patch<ProposalEntity>(
       `/proposal/${id}`,
       { signature: encode(signature) },
@@ -202,7 +202,7 @@ export class Proposal extends Connection {
       decode(randomness).subarray(32),
       this.keypair.privkey,
     )
-    const Authorization = await this.getAuthorization()
+    const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.patch<ProposalEntity>(
       `/proposal/${id}`,
       { signature: encode(signature) },
