@@ -11,7 +11,6 @@ export type SignerEntity = {
   activated: boolean
   owner: string
   encryptedShare: string
-  multisig: MultisigEntity
 }
 
 export class Signer extends Connection {
