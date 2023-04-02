@@ -1,6 +1,5 @@
 import { Connection } from './connection'
 import { SignerEntity } from './signer'
-import { isEmailAddress } from './utils'
 
 export type MultisigEntity = {
   id: string

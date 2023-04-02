@@ -21,16 +21,6 @@ export const getPubkey = (
 }
 
 /**
- * Validate email address
- * @param email
- * @returns
- */
-export const isEmailAddress = (email: string) =>
-  email.match(
-    /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-  )
-
-/**
  * Validate Ethereum address
  * @param address Ethereum address
  * @returns true/false

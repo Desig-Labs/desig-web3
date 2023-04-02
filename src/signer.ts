@@ -1,5 +1,4 @@
 import { ElGamal } from '@desig/core'
-import { CryptoSys } from '@desig/supported-chains'
 import { decode } from 'bs58'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
@@ -12,6 +11,7 @@ export type SignerEntity = {
   activated: boolean
   owner: string
   encryptedShare: string
+  multisig: MultisigEntity
 }
 
 export class Signer extends Connection {
