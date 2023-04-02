@@ -9,14 +9,14 @@ import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import { Multisig, MultisigEntity } from './multisig'
-import { SignerEntiry } from './signer'
+import { SignerEntity } from './signer'
 import { PaginationParams } from './types'
 
 export type ApprovalEntity = {
   id: number
   signature: string
   randomness: string
-  signer: Omit<SignerEntiry, 'multisig'>
+  signer: Omit<SignerEntity, 'multisig'>
   createdAt: Date
   updatedAt: Date
 }

@@ -1,5 +1,5 @@
 import { Connection } from './connection'
-import { SignerEntiry } from './signer'
+import { SignerEntity } from './signer'
 import { isEmailAddress } from './utils'
 
 export type MultisigEntity = {
@@ -8,7 +8,7 @@ export type MultisigEntity = {
   n: number
   name: string
   sqrpriv?: string
-  signers: SignerEntiry[]
+  signers: SignerEntity[]
   createdAt: Date
   updatedAt: Date
 }

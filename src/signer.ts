@@ -5,7 +5,7 @@ import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import { MultisigEntity } from './multisig'
 
-export type SignerEntiry = {
+export type SignerEntity = {
   id: string
   index: number
   nonce: string
@@ -23,9 +23,9 @@ export class Signer extends Connection {
    * Get all signers data
    * @returns Signer data
    */
-  getAllSigners = async (): Promise<SignerEntiry[]> => {
+  getAllSigners = async (): Promise<SignerEntity[]> => {
     const Authorization = await this.getTimestampAuthorization()
-    const { data } = await this.connection.get<SignerEntiry[]>(`/signer`, {
+    const { data } = await this.connection.get<SignerEntity[]>(`/signer`, {
       headers: {
         Authorization,
       },
@@ -40,10 +40,10 @@ export class Signer extends Connection {
    */
   getSigner = async (
     signerId: string,
-  ): Promise<SignerEntiry & { multisig: MultisigEntity }> => {
+  ): Promise<SignerEntity & { multisig: MultisigEntity }> => {
     const Authorization = await this.getTimestampAuthorization()
     const { data } = await this.connection.get<
-      SignerEntiry & { multisig: MultisigEntity }
+      SignerEntity & { multisig: MultisigEntity }
     >(`/signer/${signerId}`, {
       headers: {
         Authorization,
@@ -59,10 +59,10 @@ export class Signer extends Connection {
    */
   activateSigner = async (
     signerId: string,
-  ): Promise<SignerEntiry & { multisig: MultisigEntity }> => {
+  ): Promise<SignerEntity & { multisig: MultisigEntity }> => {
     const Authorization = await this.getTimestampAuthorization()
     const { data } = await this.connection.patch<
-      SignerEntiry & { multisig: MultisigEntity }
+      SignerEntity & { multisig: MultisigEntity }
     >(
       `/signer/${signerId}`,
       {},
