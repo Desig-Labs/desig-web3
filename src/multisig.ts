@@ -34,7 +34,7 @@ export class Multisig extends Connection {
    * @param opt.t The t-out-of-n threshold
    * @param opt.n The t-out-of-n threshold
    * @param opt.name The multisig's name
-   * @param opt.emails The list of member emails
+   * @param opt.pubkeys The list of member pubkeys
    * @returns Multisig data
    */
   initializeMultisig = async ({

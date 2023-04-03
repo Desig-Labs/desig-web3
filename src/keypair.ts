@@ -86,13 +86,15 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
   }
 
   getPrivateKey = () =>
-    `eddsa/${SecretSharing.compress({
-      index: this.index,
-      t: this.t,
-      n: this.n,
-      id: this.id,
-      share: this.privkey,
-    })}`
+    `eddsa/${encode(this.pubkey)}/${encode(
+      SecretSharing.compress({
+        index: this.index,
+        t: this.t,
+        n: this.n,
+        id: this.id,
+        share: this.privkey,
+      }),
+    )}`
 
   sign = async (msg: Uint8Array): Promise<Uint8Array> => {
     return EdUtil.sign(msg, this.privkey)
@@ -154,13 +156,15 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
   }
 
   getPrivateKey = () =>
-    `ecdsa/${SecretSharing.compress({
-      index: this.index,
-      t: this.t,
-      n: this.n,
-      id: this.id,
-      share: this.privkey,
-    })}`
+    `ecdsa/${encode(this.pubkey)}/${encode(
+      SecretSharing.compress({
+        index: this.index,
+        t: this.t,
+        n: this.n,
+        id: this.id,
+        share: this.privkey,
+      }),
+    )}`
 
   sign = async (msg: Uint8Array): Promise<Uint8Array> => {
     return ECUtil.sign(msg, this.privkey)
