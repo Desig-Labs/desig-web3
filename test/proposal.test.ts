@@ -1,6 +1,6 @@
 import { decode, encode } from 'bs58'
 import { expect } from 'chai'
-import { Proposal, Signer, toEthereumAddress, toSolanaAddress } from '../dist'
+import { Proposal, Signer, toEvmAddress, toSolanaAddress } from '../dist'
 import {
   ecdsa,
   eddsa,
@@ -102,7 +102,7 @@ describe('ecdsa: proposal', () => {
     carol = await getLastProposal(carolPrivkey)
     // Master key
     multisigId = encode(alice.keypair!.masterkey)
-    print('master key:', toEthereumAddress(alice.keypair!.masterkey))
+    print('master key:', toEvmAddress(alice.keypair!.masterkey))
     expect(alice.keypair!.masterkey).deep.equal(bob.keypair!.masterkey)
     expect(alice.keypair!.masterkey).deep.equal(carol.keypair!.masterkey)
   })

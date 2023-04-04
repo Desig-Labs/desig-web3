@@ -223,7 +223,7 @@ export class Proposal extends Connection {
    */
   finalizeSignature = async (
     id: string,
-  ): Promise<{ sig: string; recv?: number }> => {
+  ): Promise<{ sig: Uint8Array; recv?: number }> => {
     const { t } = this.keypair.getThreshold()
     const tx = await this.getProposal(id)
     const approvals = tx.approvals.filter(({ signature }) => !!signature)
@@ -253,7 +253,7 @@ export class Proposal extends Connection {
       ),
     )
     const sig = EdTSS.addSig(sigs)
-    return { sig: encode(sig) }
+    return { sig }
   }
   // Finalize EC Signature
   private finalizeEcSignature = async (
@@ -279,7 +279,7 @@ export class Proposal extends Connection {
       decode(sqrpriv),
       decode(sqrhz),
     )
-    return { sig: encode(sig), recv }
+    return { sig, recv }
   }
 
   /**
@@ -288,20 +288,12 @@ export class Proposal extends Connection {
    * @param signature Master signature
    * @returns true/false
    */
-  verifySignature = async (id: string, signature: string) => {
+  verifySignature = async (id: string, signature: Uint8Array) => {
     const { msg } = await this.getProposal(id)
     if (this.keypair.cryptosys === CryptoSys.EdDSA)
-      return EdTSS.verify(
-        decode(msg),
-        decode(signature),
-        this.keypair.masterkey,
-      )
+      return EdTSS.verify(decode(msg), signature, this.keypair.masterkey)
     if (this.keypair.cryptosys === CryptoSys.ECDSA)
-      return ECTSS.verify(
-        decode(msg),
-        decode(signature),
-        this.keypair.masterkey,
-      )
+      return ECTSS.verify(decode(msg), signature, this.keypair.masterkey)
     throw new Error('Invalid crypto system')
   }
 }
