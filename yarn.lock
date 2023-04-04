@@ -31,10 +31,10 @@
     "@noble/secp256k1" "^1.7.0"
     bn.js "^5.2.1"
 
-"@desig/supported-chains@^0.1.3":
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/@desig/supported-chains/-/supported-chains-0.1.3.tgz#7c1f7cc1970c20481521a566abcdc5c817abfdb2"
-  integrity sha512-0Rybaf84/AjkjXmEzI7aE1cOYgNXHjnzlZs4DBipApWu0mPJbSHcS/1tDfwWdw2kmajGUZPZqr+8K64ons5cdQ==
+"@desig/supported-chains@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@desig/supported-chains/-/supported-chains-0.1.4.tgz#bb35b16b7725f24345f3b21531e36f349213293c"
+  integrity sha512-TK9OsG/aDK3gwV3Z0/FHllBvPr3z88npiBnOfYhKr3hZoJzwVhynkKrmxAz7MPMRWTIeAS0Z9xDQcdjUHcHOGg==
   dependencies:
     "@noble/hashes" "^1.2.0"
     "@noble/secp256k1" "^1.7.1"

@@ -15,68 +15,113 @@ yarn add @desig/web3
 ### Interactive Mode
 
 ```ts
-import { Keypair, Proposal } from '@desig/web3'
-const secret = 'your secret'
-const keypair = Keypair.fromSecret(secret)
-const proposal = new Proposal(keypair)
-await proposal.approve(...)
+import { DesigECDSAKeypair, Proposal } from '@desig/web3'
+const secretShare = 'ecdsa/<master>/<share>'
+const keypair = DesigECDSAKeypair.fromSecret(secret)
+const dProposal = new Proposal(keypair)
+await dProposal.approveProposal(<proposal.id>)
 ```
 
 ### Read-only Mode
 
 ```ts
-import { CryptoSys, Keypair, Multisig } from '@desig/web3'
-const multisig = new Multisig()
-await multisig.fetch(...)
+import { CryptoSys, Multisig } from '@desig/web3'
+const dMultisig = new Multisig()
+await dMultisig.getMultisig(<multisig.id>)
 ```
 
 ## Example
 
-```ts
-import { Transaction } from '@solana/web3.js'
-import { DesigEdDSAKeypair, Multisig, Proposal } from '@desig/web3'
-import { transfer, sendAndConfirm } from '<appendix_transfer_solana>'
-import { SolanaDevnet } from '@desig/supported_chains'
+### Create a multisig
 
-// Init a 2-out-of-2 multisig
-const multisig = new Multisig('https://<desig_cluster>')
+```ts
+import { Multisig } from '@desig/web3'
+
+const dMultisig = new Multisig('https://<eddsa_or_ecdsa_cluster>')
 const t = 2
 const n = 2
 const name = 'My first DAO'
-const emails = ['<alice_email>@gmail.com', '<bob_email>@gmail.com']
-const { id: multisigId } = await multisig.initializeMultisig({
+const pubkeys = ['<alice_pubkey>', '<bob_pubkey>']
+const multisig = await dMultisig.initializeMultisig({
   t,
   n,
   name,
-  emails,
+  pubkeys,
 })
+```
+
+### Create a proposal: Transfer SOL
+
+```ts
+import { Transaction } from '@solana/web3.js'
+import { DesigEdDSAKeypair, Proposal } from '@desig/web3'
+import { transfer, sendAndConfirm } from '<appendix_transfer_solana>'
+import { SolanaDevnet } from '@desig/supported_chains'
+
 // Create alice keypair and bob keypair from secrets sent to the emails
-const aliceKeypair = new DesigEdDSAKeypair('<alice_secret>')
-const bobKeypair = new DesigEdDSAKeypair('<bob_secret>')
+const aliceKeypair = new DesigEdDSAKeypair('<alice_secret_share>')
+const bobKeypair = new DesigEdDSAKeypair('<bob_secret_share>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
 // Alice initilizes a transaction
-const aliceTx = new Proposal('https://<desig_cluster>', aliceKeypair)
-const bobTx = new Proposal('https://<desig_cluster>', bobKeypair)
-const tx = transfer(masterkey)
+const aliceProposal = new Proposal('https://<eddsa_cluster>', aliceKeypair)
+const bobProposal = new Proposal('https://<eddsa_cluster>', bobKeypair)
+const tx = transfer(masterkey, 5000)
 const raw = tx.serialize({ verifySignatures: false })
 const msg = tx.serializeMessage()
-const { id: txId } = await aliceTx.initializeProposal({
+const { id: proposalId } = await aliceProposal.initializeProposal({
   msg,
   raw,
   chainId: new SolanaDevnet().chainId,
 })
 // Alice approves the transaction
-await aliceTx.approveProposal(txId)
+await aliceProposal.approveProposal(proposalId)
 // Bob approves the transaction
-await bobTx.approveProposal(txId)
+await bobProposal.approveProposal(proposalId)
 // Bob finalizes the transaction
-const { sig } = await bobTx.finalizeSignature(txId)
-const { raw } = await bobTx.getProposal(txId)
-const signedTx = Transaction.from(decode(raw))
-signedTx.addSignature(masterkey, Buffer.from(decode(sig)))
+const { sig } = await bobProposal.finalizeSignature(proposalId)
+const { raw } = await bobProposal.getProposal(proposalId)
+const serializedTx = Transaction.from(decode(raw))
+const signedTx = addSolSignature(serializedTx, { sig, pubkey: masterkey })
 // Bob submits the transaction
-const txHash = await sendAndConfirm(tx)
+const txHash = await sendAndConfirm(signedTx)
+```
+
+### Create a proposal: Transfer ETH
+
+```ts
+import { Transaction, hexlify } from 'ethers'
+import { DesigECDSAKeypair, Proposal } from '@desig/web3'
+import { transfer, sendAndConfirm } from '<appendix_transfer_ethereum>'
+import { Goerli } from '@desig/supported_chains'
+
+// Create alice keypair and bob keypair from secrets sent to the emails
+const aliceKeypair = new DesigECDSAKeypair('<alice_secret_share>')
+const bobKeypair = new DesigECDSAKeypair('<bob_secret_share>')
+// aliceKeypair.masterkey === bobKeypair.masterkey is true
+const masterkey = new PublicKey(aliceKeypair.masterkey)
+// Alice initilizes a transaction
+const aliceProposal = new Proposal('https://<ecdsa_cluster>', aliceKeypair)
+const bobProposal = new Proposal('https://<ecdsa_cluster>', bobKeypair)
+const tx = transfer(masterkey, 5000)
+const raw = getBytes(tx.unsignedSerialized)
+const msg = getBytes(tx.unsignedHash)
+const { id: proposalId } = await aliceProposal.initializeProposal({
+  msg,
+  raw,
+  chainId: new Goerli().chainId,
+})
+// Alice approves the transaction
+await aliceProposal.approveProposal(proposalId)
+// Bob approves the transaction
+await bobProposal.approveProposal(proposalId)
+// Bob finalizes the transaction
+const { sig } = await bobProposal.finalizeSignature(proposalId)
+const { raw, chainId } = await bobProposal.getProposal(proposalId)
+const serializedTx = addEvmSignature(decode(raw), { sig, recv }, chainId)
+const signedTx = Transaction.from(hexlify(serializedTx))
+// Bob submits the transaction
+const txHash = await sendAndConfirm(signedTx)
 ```
 
 ## Appendix
@@ -85,9 +130,7 @@ const txHash = await sendAndConfirm(tx)
 
 ```ts
 import {
-  Cluster,
   Connection,
-  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -95,12 +138,12 @@ import {
 
 const conn = new Connection('https://api.devnet.solana.com')
 
-export const transfer = async (payer: PublicKey) => {
+export const transfer = async (payer: PublicKey, lamports: number) => {
   const tx = new Transaction()
   const ix = SystemProgram.transfer({
     fromPubkey: payer,
-    toPubkey: new Keypair().publicKey,
-    lamports: 5000,
+    toPubkey: payer,
+    lamports,
   })
   tx.add(ix)
   tx.feePayer = payer
@@ -120,6 +163,43 @@ export const sendAndConfirm = async (tx: Transaction) => {
     lastValidBlockHeight,
   })
   return signature
+}
+```
+
+### Transfer Ethereum
+
+```ts
+import { Transaction, toBeHex, WebSocketProvider } from 'ethers'
+
+export const asyncWait = (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export const transfer = async (payer: string, wei: number) => {
+  // You can fill up the transaction params by yourself
+  const tx = Transaction.from({
+    to: payer,
+    value: toBeHex(wei.toString()),
+    chainId,
+    nonce,
+    gasLimit,
+    gasPrice,
+  })
+  return tx
+}
+
+export const sendAndConfirm = async (tx: Transaction) => {
+  const web3 = new WebSocketProvider('<infura_websocket_api>')
+  const { hash } = await web3.broadcastTransaction(tx.serialized)
+  while (true) {
+    const currentBlockNumber = await web3.getBlockNumber()
+    const { blockNumber } = (await web3.getTransactionReceipt(hash)) || {
+      blockNumber: currentBlockNumber,
+    }
+    if (currentBlockNumber - blockNumber >= 1) break
+    else await asyncWait(1000)
+  }
+  return hash
 }
 ```
 
