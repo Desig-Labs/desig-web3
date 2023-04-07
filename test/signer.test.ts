@@ -13,14 +13,13 @@ describe('eddsa: signer', () => {
   })
 
   it('get signer', async () => {
-    const { nonce, owner } = await alice.getSigner(signerId)
-    expect(nonce).not.empty
+    const { owner } = await alice.getSigner(signerId)
     expect(owner).equal(alice.owner)
   })
 
   it('activate signer', async () => {
-    const { nonce } = await alice.activateSigner(signerId)
-    expect(nonce).not.empty
+    const { activated } = await alice.activateSigner(signerId)
+    expect(activated).true
   })
 })
 
@@ -34,13 +33,12 @@ describe('ecdsa: signer', () => {
   })
 
   it('get signer', async () => {
-    const { nonce, owner } = await alice.getSigner(signerId)
-    expect(nonce).not.empty
+    const { owner } = await alice.getSigner(signerId)
     expect(owner).equal(alice.owner)
   })
 
   it('activate signer', async () => {
-    const { nonce } = await alice.activateSigner(signerId)
-    expect(nonce).not.empty
+    const { activated } = await alice.activateSigner(signerId)
+    expect(activated).true
   })
 })

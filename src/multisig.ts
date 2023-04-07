@@ -1,16 +1,5 @@
 import { Connection } from './connection'
-import { SignerEntity } from './signer'
-
-export type MultisigEntity = {
-  id: string
-  t: number
-  n: number
-  name: string
-  sqrpriv?: string
-  signers: SignerEntity[]
-  createdAt: Date
-  updatedAt: Date
-}
+import type { MultisigEntity } from './types'
 
 export class Multisig extends Connection {
   constructor(cluster: string) {

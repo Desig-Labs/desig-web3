@@ -1,8 +1,9 @@
 import { EdUtil } from '@desig/core'
 import { sign } from '@noble/ed25519'
 import axios, { AxiosInstance } from 'axios'
-import { decode, encode } from 'bs58'
+import { encode } from 'bs58'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
+import type { MultisigEntity } from './types'
 
 export class Connection {
   protected readonly connection: AxiosInstance
@@ -42,11 +43,12 @@ export class Connection {
    * @param address Keypair's address
    * @returns The most current nonce
    */
-  private _nonce = async (address: string): Promise<string> => {
-    const { data: nonce } = await this.connection.get(
-      `/signer/${address}/nonce`,
-    )
-    if (!nonce)
+  private _nonce = async (address: string): Promise<number> => {
+    const multisigId = encode(this.keypair.masterkey)
+    const {
+      data: { nonce },
+    } = await this.connection.get<MultisigEntity>(`/multisig/${multisigId}`)
+    if (typeof nonce !== 'number')
       throw new Error(`Cannot get nonce of ${address} from ${this.cluster}`)
     return nonce
   }
@@ -68,7 +70,7 @@ export class Connection {
     if (!this.keypair?.sign)
       throw new Error('Cannot run this function with a read-only keypair')
     const nonce = await this.getNonce()
-    const sig = await this.keypair.sign(decode(nonce))
+    const sig = await this.keypair.sign(new TextEncoder().encode(String(nonce)))
     const credential = `${this.address}/${encode(sig)}`
     return `Bearer ${credential}`
   }

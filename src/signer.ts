@@ -2,16 +2,7 @@ import { ElGamal } from '@desig/core'
 import { decode } from 'bs58'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
-import { MultisigEntity } from './multisig'
-
-export type SignerEntity = {
-  id: string
-  index: number
-  nonce: string
-  activated: boolean
-  owner: string
-  encryptedShare: string
-}
+import type { MultisigEntity, SignerEntity } from './types'
 
 export class Signer extends Connection {
   constructor(cluster: string, privkey: Uint8Array) {

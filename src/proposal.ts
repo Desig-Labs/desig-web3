@@ -8,37 +8,14 @@ import { decode, encode } from 'bs58'
 import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
-import { Multisig, MultisigEntity } from './multisig'
-import { SignerEntity } from './signer'
-import { PaginationParams } from './types'
-
-export type ApprovalEntity = {
-  id: number
-  signature: string
-  randomness: string
-  signer: Omit<SignerEntity, 'multisig'>
-  createdAt: Date
-  updatedAt: Date
-}
-
-export type ProposalEntity = {
-  id: string
-  multisig: Pick<MultisigEntity, 'id'>
-  chainId: string
-  approvals: ApprovalEntity[]
-  msg: string
-  raw: string
-  R: string
-  sqrhz?: string
-  ttl: number
-  createdAt: Date
-  updatedAt: Date
-}
-
-export type ApprovalEvents = 'insertApproval' | 'updateSignature'
-export type ApprovalEventResponse = ApprovalEntity & {
-  proposal: Omit<ProposalEntity, 'approvals'>
-}
+import { Multisig } from './multisig'
+import type {
+  ApprovalEntity,
+  ApprovalEventResponse,
+  ApprovalEvents,
+  PaginationParams,
+  ProposalEntity,
+} from './types'
 
 export const APPROVAL_EVENTS: ApprovalEvents[] = [
   'insertApproval',
