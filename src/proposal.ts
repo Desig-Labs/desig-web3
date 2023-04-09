@@ -218,7 +218,7 @@ export class Proposal extends Connection {
   }
   // Finalize Ed Signature
   private finalizeEdSignature = async (approvals: ApprovalEntity[]) => {
-    const secretSharing = new SecretSharing(EdTSS.ff.r, 'le')
+    const secretSharing = new SecretSharing(EdTSS.ff)
     const indice = approvals.map(({ signer: { index } }) =>
       new BN(index).toArrayLike(Buffer, 'le', 8),
     )
@@ -237,7 +237,7 @@ export class Proposal extends Connection {
     signatures: ApprovalEntity[],
     { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
   ) => {
-    const secretSharing = new SecretSharing(ECTSS.ff.r, 'be')
+    const secretSharing = new SecretSharing(ECTSS.ff)
     const multisig = new Multisig(this.cluster)
     const multisigId = encode(this.keypair.masterkey)
     const { sqrpriv } = await multisig.getMultisig(multisigId)

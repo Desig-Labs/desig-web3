@@ -1,4 +1,4 @@
-import { ElGamal } from '@desig/core'
+import { EdCurve, ElGamal } from '@desig/core'
 import { decode } from 'bs58'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
@@ -67,7 +67,8 @@ export class Signer extends Connection {
 
   getSignerKeypair = async (signerId: string) => {
     const { encryptedShare } = await this.getSigner(signerId)
-    const buf = await ElGamal.decrypt(decode(encryptedShare), this.privkey)
+    const elgamal = new ElGamal(EdCurve)
+    const buf = await elgamal.decrypt(decode(encryptedShare), this.privkey)
     const secret = new TextDecoder().decode(buf)
     if (secret.startsWith('eddsa')) return new DesigEdDSAKeypair(secret)
     if (secret.startsWith('ecdsa')) return new DesigECDSAKeypair(secret)

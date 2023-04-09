@@ -1,9 +1,9 @@
-import { EdUtil } from '@desig/core'
 import { sign } from '@noble/ed25519'
 import axios, { AxiosInstance } from 'axios'
 import { encode } from 'bs58'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import type { MultisigEntity } from './types'
+import { EdCurve } from '@desig/core'
 
 export class Connection {
   protected readonly connection: AxiosInstance
@@ -28,7 +28,7 @@ export class Connection {
   get owner() {
     if (!this.privkey)
       throw new Error('Cannot run this function with a read-only keypair')
-    const pubkey = EdUtil.getPublicKey(this.privkey)
+    const pubkey = EdCurve.getPublicKey(this.privkey)
     return encode(pubkey)
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "The Decentralized Signature",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -8,8 +8,7 @@
     "multisig",
     "multichain",
     "blockchain-agnostic",
-    "smartcontractless",
-    "layer0"
+    "smartcontractless"
   ],
   "main": "dist/index.js",
   "repository": "git@github.com:DescartesNetwork/desig-web3.git",
@@ -25,18 +24,18 @@
   "scripts": {
     "prebuild": "yarn clean",
     "build": "tsc",
-    "start": "nodemon src/index.ts",
     "predeploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts",
     "deploy": "echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
     "pretest": "yarn build",
     "test": "mocha --exit --require ts-node/register -t 120000 test/**/*.test.ts",
+    "test:watch": "nodemon --ext ts --watch src --watch test --exec\"yarn test\"",
     "clean": "rimraf dist"
   },
   "engines": {
     "node": ">=16 <=18"
   },
   "dependencies": {
-    "@desig/core": "^0.0.37",
+    "@desig/core": "^0.1.3",
     "@desig/supported-chains": "^0.1.4",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",
@@ -56,6 +55,7 @@
     "chai": "^4.3.7",
     "gh-pages": "^4.0.0",
     "mocha": "^10.2.0",
+    "nodemon": "^2.0.22",
     "rimraf": "^3.0.2",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
