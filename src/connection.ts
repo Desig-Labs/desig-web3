@@ -1,9 +1,11 @@
-import { sign } from '@noble/ed25519'
+import { sign as edSign } from '@noble/ed25519'
+import { sign as ecSign } from '@noble/secp256k1'
+import { ECCurve, EdCurve } from '@desig/core'
+import { CryptoSys } from '@desig/supported-chains'
 import axios, { AxiosInstance } from 'axios'
 import { encode } from 'bs58'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import type { MultisigEntity } from './types'
-import { EdCurve } from '@desig/core'
 
 export class Connection {
   protected readonly connection: AxiosInstance
@@ -12,6 +14,7 @@ export class Connection {
 
   constructor(
     public readonly cluster: string,
+    public readonly cryptosys: CryptoSys,
     {
       privkey,
       keypair,
@@ -23,18 +26,24 @@ export class Connection {
     this.connection = axios.create({ baseURL: this.cluster })
     this.privkey = privkey
     this.keypair = keypair
+    if (this.keypair && this.keypair.cryptosys !== this.cryptosys)
+      throw new Error('Invalid crypto system')
   }
 
   get owner() {
     if (!this.privkey)
-      throw new Error('Cannot run this function with a read-only keypair')
-    const pubkey = EdCurve.getPublicKey(this.privkey)
+      throw new Error('Cannot run this function without private key')
+    const getPublicKey =
+      this.cryptosys === CryptoSys.ECDSA
+        ? ECCurve.getPublicKey
+        : EdCurve.getPublicKey
+    const pubkey = getPublicKey(this.privkey)
     return encode(pubkey)
   }
 
   get address() {
     if (!this.keypair?.pubkey)
-      throw new Error('Cannot run this function with a read-only keypair')
+      throw new Error('Cannot run this function without keypair')
     return encode(this.keypair.pubkey)
   }
 
@@ -84,6 +93,7 @@ export class Connection {
       expiredAt: Date.now() + 3000, // 3s
     })
     const msg = new TextEncoder().encode(token)
+    const sign = this.cryptosys === CryptoSys.ECDSA ? ecSign : edSign
     const sig = await sign(msg, this.privkey)
     const credential = `${encode(msg)}/${encode(sig)}`
     return `Bearer ${credential}`

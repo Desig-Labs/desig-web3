@@ -1,11 +1,12 @@
-import { getPublicKey } from '@noble/ed25519'
 import { decode, encode } from 'bs58'
 import { expect } from 'chai'
 import { Multisig } from '../dist'
 import { eddsa, ecdsa, alicePrivkey, bobPrivkey, carolPrivkey } from './config'
+import { ECCurve, EdCurve } from '@desig/core'
+import { CryptoSys } from '@desig/supported-chains'
 
 describe('eddsa: multisig', () => {
-  const multisig = new Multisig(eddsa.cluster)
+  const multisig = new Multisig(eddsa.cluster, CryptoSys.EdDSA)
   const rand = Math.round(Math.random() * 10 ** 9)
   const t = 2
   const n = 3
@@ -14,9 +15,9 @@ describe('eddsa: multisig', () => {
   let multisigId = ''
 
   before(async () => {
-    const alicePubkey = await getPublicKey(decode(alicePrivkey))
-    const bobPubkey = await getPublicKey(decode(bobPrivkey))
-    const carolPubkey = await getPublicKey(decode(carolPrivkey))
+    const alicePubkey = EdCurve.getPublicKey(decode(alicePrivkey))
+    const bobPubkey = EdCurve.getPublicKey(decode(bobPrivkey))
+    const carolPubkey = EdCurve.getPublicKey(decode(carolPrivkey))
     pubkeys.push(encode(alicePubkey))
     pubkeys.push(encode(bobPubkey))
     pubkeys.push(encode(carolPubkey))
@@ -40,7 +41,7 @@ describe('eddsa: multisig', () => {
 })
 
 describe('ecdsa: multisig', () => {
-  const multisig = new Multisig(ecdsa.cluster)
+  const multisig = new Multisig(ecdsa.cluster, CryptoSys.ECDSA)
   const rand = Math.round(Math.random() * 10 ** 9)
   const t = 2
   const n = 3
@@ -49,9 +50,9 @@ describe('ecdsa: multisig', () => {
   let multisigId = ''
 
   before(async () => {
-    const alicePubkey = await getPublicKey(decode(alicePrivkey))
-    const bobPubkey = await getPublicKey(decode(bobPrivkey))
-    const carolPubkey = await getPublicKey(decode(carolPrivkey))
+    const alicePubkey = ECCurve.getPublicKey(decode(alicePrivkey))
+    const bobPubkey = ECCurve.getPublicKey(decode(bobPrivkey))
+    const carolPubkey = ECCurve.getPublicKey(decode(carolPrivkey))
     pubkeys.push(encode(alicePubkey))
     pubkeys.push(encode(bobPubkey))
     pubkeys.push(encode(carolPubkey))

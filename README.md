@@ -16,9 +16,11 @@ yarn add @desig/web3
 
 ```ts
 import { DesigECDSAKeypair, Proposal } from '@desig/web3'
+import { CryptoSys } from '@desig/supported-chains'
+
 const secretShare = 'ecdsa/<master>/<share>'
 const keypair = DesigECDSAKeypair.fromSecret(secret)
-const dProposal = new Proposal(keypair)
+const dProposal = new Proposal('https://<ecdsa_cluster>', CryptoSys.ECDSA, keypair)
 await dProposal.approveProposal(<proposal.id>)
 ```
 
@@ -26,7 +28,9 @@ await dProposal.approveProposal(<proposal.id>)
 
 ```ts
 import { CryptoSys, Multisig } from '@desig/web3'
-const dMultisig = new Multisig()
+import { CryptoSys } from '@desig/supported-chains'
+
+const dMultisig = new Multisig('https://<ecdsa_cluster>', CryptoSys.ECDSA)
 await dMultisig.getMultisig(<multisig.id>)
 ```
 
@@ -36,8 +40,12 @@ await dMultisig.getMultisig(<multisig.id>)
 
 ```ts
 import { Multisig } from '@desig/web3'
+import { CryptoSys } from '@desig/supported-chains'
 
-const dMultisig = new Multisig('https://<eddsa_or_ecdsa_cluster>')
+const dMultisig = new Multisig(
+  'https://<eddsa_or_ecdsa_cluster>',
+  CryptoSys.ECDSA,
+)
 const t = 2
 const n = 2
 const name = 'My first DAO'
@@ -56,7 +64,7 @@ const multisig = await dMultisig.initializeMultisig({
 import { Transaction } from '@solana/web3.js'
 import { DesigEdDSAKeypair, Proposal } from '@desig/web3'
 import { transfer, sendAndConfirm } from '<appendix_transfer_solana>'
-import { SolanaDevnet } from '@desig/supported_chains'
+import { CryptoSys, SolanaDevnet } from '@desig/supported_chains'
 
 // Create alice keypair and bob keypair from secrets sent to the emails
 const aliceKeypair = new DesigEdDSAKeypair('<alice_secret_share>')
@@ -64,8 +72,16 @@ const bobKeypair = new DesigEdDSAKeypair('<bob_secret_share>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
 // Alice initilizes a transaction
-const aliceProposal = new Proposal('https://<eddsa_cluster>', aliceKeypair)
-const bobProposal = new Proposal('https://<eddsa_cluster>', bobKeypair)
+const aliceProposal = new Proposal(
+  'https://<eddsa_cluster>',
+  CryptoSys.EdDSA,
+  aliceKeypair,
+)
+const bobProposal = new Proposal(
+  'https://<eddsa_cluster>',
+  CryptoSys.EdDSA,
+  bobKeypair,
+)
 const tx = transfer(masterkey, 5000)
 const raw = tx.serialize({ verifySignatures: false })
 const msg = tx.serializeMessage()
@@ -93,7 +109,7 @@ const txHash = await sendAndConfirm(signedTx)
 import { Transaction, hexlify } from 'ethers'
 import { DesigECDSAKeypair, Proposal } from '@desig/web3'
 import { transfer, sendAndConfirm } from '<appendix_transfer_ethereum>'
-import { Goerli } from '@desig/supported_chains'
+import { CryptoSys, Goerli } from '@desig/supported_chains'
 
 // Create alice keypair and bob keypair from secrets sent to the emails
 const aliceKeypair = new DesigECDSAKeypair('<alice_secret_share>')
@@ -101,8 +117,16 @@ const bobKeypair = new DesigECDSAKeypair('<bob_secret_share>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
 // Alice initilizes a transaction
-const aliceProposal = new Proposal('https://<ecdsa_cluster>', aliceKeypair)
-const bobProposal = new Proposal('https://<ecdsa_cluster>', bobKeypair)
+const aliceProposal = new Proposal(
+  'https://<ecdsa_cluster>',
+  CryptoSys.ECDSA,
+  aliceKeypair,
+)
+const bobProposal = new Proposal(
+  'https://<ecdsa_cluster>',
+  CryptoSys.ECDSA,
+  bobKeypair,
+)
 const tx = transfer(masterkey, 5000)
 const raw = getBytes(tx.unsignedSerialized)
 const msg = getBytes(tx.unsignedHash)

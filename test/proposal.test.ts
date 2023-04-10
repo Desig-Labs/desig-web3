@@ -9,6 +9,7 @@ import {
   bobPrivkey,
   carolPrivkey,
 } from './config'
+import { CryptoSys } from '@desig/supported-chains'
 
 describe('eddsa: proposal', () => {
   const message = 'hello world'
@@ -19,10 +20,10 @@ describe('eddsa: proposal', () => {
   let multisigId = ''
 
   const getLastProposal = async (privkey: string) => {
-    const signer = new Signer(eddsa.cluster, decode(privkey))
+    const signer = new Signer(eddsa.cluster, CryptoSys.EdDSA, decode(privkey))
     const [{ id }] = await signer.getAllSigners()
     const keypair = await signer.getSignerKeypair(id)
-    return new Proposal(eddsa.cluster, keypair)
+    return new Proposal(eddsa.cluster, CryptoSys.EdDSA, keypair)
   }
 
   it('sol address', async () => {
@@ -90,10 +91,10 @@ describe('ecdsa: proposal', () => {
   let multisigId = ''
 
   const getLastProposal = async (privkey: string) => {
-    const signer = new Signer(ecdsa.cluster, decode(privkey))
+    const signer = new Signer(ecdsa.cluster, CryptoSys.ECDSA, decode(privkey))
     const [{ id }] = await signer.getAllSigners()
     const keypair = await signer.getSignerKeypair(id)
-    return new Proposal(ecdsa.cluster, keypair)
+    return new Proposal(ecdsa.cluster, CryptoSys.ECDSA, keypair)
   }
 
   it('eth address', async () => {

@@ -25,8 +25,12 @@ export const APPROVAL_EVENTS: ApprovalEvents[] = [
 export class Proposal extends Connection {
   private socket: Socket
 
-  constructor(cluster: string, keypair: DesigEdDSAKeypair | DesigECDSAKeypair) {
-    super(cluster, { keypair })
+  constructor(
+    cluster: string,
+    cryptosys: CryptoSys,
+    keypair: DesigEdDSAKeypair | DesigECDSAKeypair,
+  ) {
+    super(cluster, cryptosys, { keypair })
   }
 
   /**
@@ -238,7 +242,7 @@ export class Proposal extends Connection {
     { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
   ) => {
     const secretSharing = new SecretSharing(ECTSS.ff)
-    const multisig = new Multisig(this.cluster)
+    const multisig = new Multisig(this.cluster, this.cryptosys)
     const multisigId = encode(this.keypair.masterkey)
     const { sqrpriv } = await multisig.getMultisig(multisigId)
     if (!sqrpriv) throw new Error('Invalid transaction')

@@ -2,9 +2,10 @@ import { decode } from 'bs58'
 import { expect } from 'chai'
 import { Signer } from '../dist'
 import { eddsa, ecdsa, alicePrivkey } from './config'
+import { CryptoSys } from '@desig/supported-chains'
 
 describe('eddsa: signer', () => {
-  const alice = new Signer(eddsa.cluster, decode(alicePrivkey))
+  const alice = new Signer(eddsa.cluster, CryptoSys.EdDSA, decode(alicePrivkey))
   let signerId: string = ''
 
   it('get all signers', async () => {
@@ -24,7 +25,7 @@ describe('eddsa: signer', () => {
 })
 
 describe('ecdsa: signer', () => {
-  const alice = new Signer(ecdsa.cluster, decode(alicePrivkey))
+  const alice = new Signer(ecdsa.cluster, CryptoSys.ECDSA, decode(alicePrivkey))
   let signerId: string = ''
 
   it('get all signers', async () => {

@@ -1,12 +1,13 @@
-import { EdCurve, ElGamal } from '@desig/core'
-import { decode } from 'bs58'
+import { ECCurve, EdCurve, ElGamal, SecretSharing } from '@desig/core'
+import { CryptoSys } from '@desig/supported-chains'
+import { decode, encode } from 'bs58'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import type { MultisigEntity, SignerEntity } from './types'
 
 export class Signer extends Connection {
-  constructor(cluster: string, privkey: Uint8Array) {
-    super(cluster, { privkey })
+  constructor(cluster: string, cryptosys: CryptoSys, privkey: Uint8Array) {
+    super(cluster, cryptosys, { privkey })
   }
 
   /**
@@ -66,12 +67,27 @@ export class Signer extends Connection {
   }
 
   getSignerKeypair = async (signerId: string) => {
-    const { encryptedShare } = await this.getSigner(signerId)
-    const elgamal = new ElGamal(EdCurve)
-    const buf = await elgamal.decrypt(decode(encryptedShare), this.privkey)
-    const secret = new TextDecoder().decode(buf)
-    if (secret.startsWith('eddsa')) return new DesigEdDSAKeypair(secret)
-    if (secret.startsWith('ecdsa')) return new DesigECDSAKeypair(secret)
+    const {
+      index,
+      encryptedShare,
+      multisig: { t, n, gid, id },
+    } = await this.getSigner(signerId)
+    const elgamal = new ElGamal(
+      this.cryptosys === CryptoSys.ECDSA ? ECCurve : EdCurve,
+    )
+    const share = elgamal.decrypt(decode(encryptedShare), this.privkey)
+    const ff = elgamal.curve.ff
+    const secret = SecretSharing.compress({
+      index: ff.decode(ff.numberToRedBN(index), 8),
+      t: ff.decode(ff.numberToRedBN(t), 8),
+      n: ff.decode(ff.numberToRedBN(n), 8),
+      id: decode(gid),
+      share,
+    })
+    if (this.cryptosys === CryptoSys.ECDSA)
+      return new DesigECDSAKeypair(`ecdsa/${id}/${encode(secret)}`)
+    if (this.cryptosys === CryptoSys.EdDSA)
+      return new DesigEdDSAKeypair(`eddsa/${id}/${encode(secret)}`)
     throw new Error('Invalid crypto scheme')
   }
 }

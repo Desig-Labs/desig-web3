@@ -15,6 +15,7 @@ export type SignerEntity = {
 
 export type MultisigEntity = {
   id: string
+  gid: string
   t: number
   n: number
   name: string

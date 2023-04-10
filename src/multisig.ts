@@ -1,9 +1,10 @@
+import { CryptoSys } from '@desig/supported-chains'
 import { Connection } from './connection'
 import type { MultisigEntity } from './types'
 
 export class Multisig extends Connection {
-  constructor(cluster: string) {
-    super(cluster)
+  constructor(cluster: string, cryptosys: CryptoSys) {
+    super(cluster, cryptosys)
   }
 
   /**
