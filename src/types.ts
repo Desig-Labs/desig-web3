@@ -9,6 +9,7 @@ export type SignerEntity = {
   activated: boolean
   owner: string
   encryptedShare: string
+  multisig: MultisigEntity
   createdAt: Date
   updatedAt: Date
 }
