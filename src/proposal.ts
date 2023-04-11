@@ -128,12 +128,10 @@ export class Proposal extends Connection {
     msg: Uint8Array
     chainId: string
   }): Promise<ProposalEntity> => {
-    const multisigId = encode(this.keypair.masterkey)
     const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.post<ProposalEntity>(
       '/proposal',
       {
-        multisigId,
         msg: encode(msg),
         raw: encode(raw),
         chainId,
