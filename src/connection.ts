@@ -1,11 +1,15 @@
-import { sign as edSign } from '@noble/ed25519'
-import { sign as ecSign } from '@noble/secp256k1'
+import * as ed from '@noble/ed25519'
+import * as ec from '@noble/secp256k1'
+import { sha512 } from '@noble/hashes/sha512'
 import { ECCurve, EdCurve } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 import axios, { AxiosInstance } from 'axios'
 import { encode } from 'bs58'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import type { MultisigEntity } from './types'
+
+// @noble/ed25519 patch
+ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m))
 
 export class Connection {
   protected readonly connection: AxiosInstance
@@ -93,8 +97,8 @@ export class Connection {
       expiredAt: Date.now() + 3000, // 3s
     })
     const msg = new TextEncoder().encode(token)
-    const sign = this.cryptosys === CryptoSys.ECDSA ? ecSign : edSign
-    const sig = await sign(msg, this.privkey)
+    const sign = this.cryptosys === CryptoSys.ECDSA ? ec.signSync : ed.sync.sign
+    const sig = sign(msg, this.privkey)
     const credential = `${encode(msg)}/${encode(sig)}`
     return `Bearer ${credential}`
   }
