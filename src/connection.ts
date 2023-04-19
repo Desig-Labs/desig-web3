@@ -1,15 +1,11 @@
 import * as ed from '@noble/ed25519'
 import * as ec from '@noble/secp256k1'
-import { sha512 } from '@noble/hashes/sha512'
 import { ECCurve, EdCurve } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 import axios, { AxiosInstance } from 'axios'
 import { encode } from 'bs58'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import type { MultisigEntity } from './types'
-
-// @noble/ed25519 patch
-ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m))
 
 export class Connection {
   protected readonly connection: AxiosInstance
@@ -83,7 +79,7 @@ export class Connection {
     if (!this.keypair?.sign)
       throw new Error('Cannot run this function with a read-only keypair')
     const nonce = await this.getNonce()
-    const sig = await this.keypair.sign(new TextEncoder().encode(String(nonce)))
+    const sig = this.keypair.sign(new TextEncoder().encode(String(nonce)))
     const credential = `${this.address}/${encode(sig)}`
     return `Bearer ${credential}`
   }

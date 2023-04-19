@@ -2,8 +2,8 @@ import { ECCurve, ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
 import { CryptoSys, toSys } from '@desig/supported-chains'
 import { decode, encode } from 'bs58'
 import BN, { Endianness } from 'bn.js'
-import { sign as ecSign } from '@noble/secp256k1'
-import { sign as edSign } from '@noble/ed25519'
+import * as ec from '@noble/secp256k1'
+import * as ed from '@noble/ed25519'
 
 export type WalletThreshold = {
   t: number
@@ -20,7 +20,7 @@ export interface WalletAdapter {
   getAddress: () => string
   getPublicKey: () => Uint8Array
   getPrivateKey: () => string
-  sign: (msg: Uint8Array) => Promise<Uint8Array>
+  sign: (msg: Uint8Array) => Uint8Array
   approve: (msg: Uint8Array) => Promise<Uint8Array>
 }
 
@@ -98,8 +98,8 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
       }),
     )}`
 
-  sign = async (msg: Uint8Array): Promise<Uint8Array> => {
-    return edSign(msg, this.privkey)
+  sign = (msg: Uint8Array): Uint8Array => {
+    return ed.sync.sign(msg, this.privkey)
   }
 
   private preapprove = async (): Promise<{ R: Uint8Array; r: Uint8Array }> => {
@@ -168,8 +168,8 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
       }),
     )}`
 
-  sign = async (msg: Uint8Array): Promise<Uint8Array> => {
-    return ecSign(msg, this.privkey)
+  sign = (msg: Uint8Array): Uint8Array => {
+    return ec.signSync(msg, this.privkey)
   }
 
   private preapprove = async (): Promise<{ R: Uint8Array; z: Uint8Array }> => {
