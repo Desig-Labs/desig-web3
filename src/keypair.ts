@@ -8,7 +8,7 @@ import * as ed from '@noble/ed25519'
 export type WalletThreshold = {
   t: number
   n: number
-  index: number
+  index: string
 }
 
 export interface WalletAdapter {
@@ -74,7 +74,7 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
   }
 
   getThreshold = () => ({
-    index: toNumber(this.index, 'le'),
+    index: encode(this.index),
     t: toNumber(this.t, 'le'),
     n: toNumber(this.n, 'le'),
   })
@@ -144,7 +144,7 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
   }
 
   getThreshold = () => ({
-    index: toNumber(this.index, 'be'),
+    index: encode(this.index),
     t: toNumber(this.t, 'be'),
     n: toNumber(this.n, 'be'),
   })

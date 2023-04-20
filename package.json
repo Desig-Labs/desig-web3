@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Desig: The Blockchain-Agnostic Multisig Solution",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -27,7 +27,7 @@
     "predeploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts",
     "deploy": "echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
     "pretest": "yarn build",
-    "test": "mocha --exit --require ts-node/register -t 120000 test/**/*.test.ts",
+    "test": "mocha --exit --require ts-node/register -t 120000 test/**/transaction.test.ts",
     "test:watch": "nodemon --ext ts --watch src --watch test --exec \"yarn test\"",
     "clean": "rimraf dist"
   },

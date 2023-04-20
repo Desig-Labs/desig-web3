@@ -1,9 +1,7 @@
 import { ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
-import { utils } from '@noble/ed25519'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { concatBytes } from '@noble/hashes/utils'
-import { BN } from 'bn.js'
 import { decode, encode } from 'bs58'
 import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
@@ -221,12 +219,10 @@ export class Proposal extends Connection {
   // Finalize Ed Signature
   private finalizeEdSignature = async (approvals: ApprovalEntity[]) => {
     const secretSharing = new SecretSharing(EdTSS.ff)
-    const indice = approvals.map(({ signer: { index } }) =>
-      new BN(index).toArrayLike(Buffer, 'le', 8),
-    )
+    const indice = approvals.map(({ signer: { index } }) => decode(index))
     const pi = secretSharing.pi(indice)
     const sigs = approvals.map(({ signature }, i) =>
-      utils.concatBytes(
+      concatBytes(
         EdCurve.mulScalar(decode(signature).subarray(0, 32), pi[i]),
         secretSharing.yl(decode(signature).subarray(32), pi[i]),
       ),
@@ -244,9 +240,7 @@ export class Proposal extends Connection {
     const multisigId = encode(this.keypair.masterkey)
     const { sqrpriv } = await multisig.getMultisig(multisigId)
     if (!sqrpriv) throw new Error('Invalid transaction')
-    const indice = signatures.map(({ signer: { index } }) =>
-      new BN(index).toArrayLike(Buffer, 'be', 8),
-    )
+    const indice = signatures.map(({ signer: { index } }) => decode(index))
     const pi = secretSharing.pi(indice)
     const sigs = signatures.map(({ signature }, i) =>
       secretSharing.yl(decode(signature), pi[i]),

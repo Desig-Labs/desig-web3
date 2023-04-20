@@ -78,7 +78,7 @@ export class Signer extends Connection {
     const share = elgamal.decrypt(decode(encryptedShare), this.privkey)
     const ff = elgamal.curve.ff
     const secret = SecretSharing.compress({
-      index: ff.decode(ff.numberToRedBN(index), 8),
+      index: decode(index),
       t: ff.decode(ff.numberToRedBN(t), 8),
       n: ff.decode(ff.numberToRedBN(n), 8),
       id: decode(gid),

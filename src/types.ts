@@ -5,7 +5,7 @@ export type PaginationParams = {
 
 export type SignerEntity = {
   id: string
-  index: number
+  index: string
   activated: boolean
   owner: string
   encryptedShare: string
@@ -50,7 +50,37 @@ export type ProposalEntity = {
   updatedAt: Date
 }
 
+export type SignatureEntity = {
+  id: number
+  signature: string
+  signer: Omit<SignerEntity, 'multisig'>
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type TransactionEntity = {
+  id: string
+  multisig: Pick<MultisigEntity, 'id'>
+  signatures: SignatureEntity[]
+  msg: string
+  raw: string
+  ttl: number
+  createdAt: Date
+  updatedAt: Date
+}
+
 export type ApprovalEvents = 'insertApproval' | 'updateSignature'
 export type ApprovalEventResponse = ApprovalEntity & {
   proposal: Omit<ProposalEntity, 'approvals'>
+}
+
+export type TransactionType =
+  | 'changeName'
+  | 'tExtension'
+  | 'tReduction'
+  | 'nExtension'
+  | 'nReduction'
+export type TransactionParams = {
+  name?: string
+  pubkey?: string
 }
