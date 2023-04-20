@@ -12,8 +12,8 @@ export const carolPrivkey = 'Bro7rv256G25xvsuY4dbRN2PiQtwR97RpeKAwXJTKfq'
  */
 export const eddsa = {
   // Desig
-  // cluster: 'https://eddsa.desig.dev',
-  cluster: 'http://localhost:10000',
+  cluster: 'https://eddsa.desig.dev',
+  // cluster: 'http://localhost:10000',
   // Solana
   chain: new SolanaDevnet(),
 }
