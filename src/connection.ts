@@ -1,6 +1,5 @@
-import * as ed from '@noble/ed25519'
-import * as ec from '@noble/secp256k1'
-import { ECCurve, EdCurve } from '@desig/core'
+import { sync } from '@noble/ed25519'
+import { EdCurve } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 import axios, { AxiosInstance } from 'axios'
 import { encode } from 'bs58'
@@ -33,11 +32,7 @@ export class Connection {
   get owner() {
     if (!this.privkey)
       throw new Error('Cannot run this function without private key')
-    const getPublicKey =
-      this.cryptosys === CryptoSys.ECDSA
-        ? ECCurve.getPublicKey
-        : EdCurve.getPublicKey
-    const pubkey = getPublicKey(this.privkey)
+    const pubkey = EdCurve.getPublicKey(this.privkey)
     return encode(pubkey)
   }
 
@@ -93,8 +88,7 @@ export class Connection {
       expiredAt: Date.now() + 3000, // 3s
     })
     const msg = new TextEncoder().encode(token)
-    const sign = this.cryptosys === CryptoSys.ECDSA ? ec.signSync : ed.sync.sign
-    const sig = sign(msg, this.privkey)
+    const sig = sync.sign(msg, this.privkey)
     const credential = `${encode(msg)}/${encode(sig)}`
     return `Bearer ${credential}`
   }

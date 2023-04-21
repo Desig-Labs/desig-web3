@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Desig: The Blockchain-Agnostic Multisig Solution",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -35,7 +35,7 @@
     "node": ">=16 <=18"
   },
   "dependencies": {
-    "@desig/core": "^0.1.7",
+    "@desig/core": "^0.2.1",
     "@desig/supported-chains": "^0.1.4",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",

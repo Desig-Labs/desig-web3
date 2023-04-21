@@ -9,25 +9,21 @@ import {
   carolPrivkey,
   rand,
 } from './config'
-import { ECCurve, EdCurve } from '@desig/core'
+import { EdCurve } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
+
+const pubkeys = [
+  encode(EdCurve.getPublicKey(decode(alicePrivkey))),
+  encode(EdCurve.getPublicKey(decode(bobPrivkey))),
+  encode(EdCurve.getPublicKey(decode(carolPrivkey))),
+]
 
 describe('eddsa: multisig', () => {
   const multisig = new Multisig(eddsa.cluster, CryptoSys.EdDSA)
   const t = 2
   const n = 3
   const name = `The Dao #${rand()}`
-  const pubkeys: string[] = []
   let multisigId = ''
-
-  before(async () => {
-    const alicePubkey = EdCurve.getPublicKey(decode(alicePrivkey))
-    const bobPubkey = EdCurve.getPublicKey(decode(bobPrivkey))
-    const carolPubkey = EdCurve.getPublicKey(decode(carolPrivkey))
-    pubkeys.push(encode(alicePubkey))
-    pubkeys.push(encode(bobPubkey))
-    pubkeys.push(encode(carolPubkey))
-  })
 
   it('initialize multisig', async () => {
     const data = await multisig.initializeMultisig({ t, n, name, pubkeys })
@@ -52,17 +48,7 @@ describe('ecdsa: multisig', () => {
   const t = 2
   const n = 3
   const name = `The Dao #${rand}`
-  const pubkeys: string[] = []
   let multisigId = ''
-
-  before(async () => {
-    const alicePubkey = ECCurve.getPublicKey(decode(alicePrivkey))
-    const bobPubkey = ECCurve.getPublicKey(decode(bobPrivkey))
-    const carolPubkey = ECCurve.getPublicKey(decode(carolPrivkey))
-    pubkeys.push(encode(alicePubkey))
-    pubkeys.push(encode(bobPubkey))
-    pubkeys.push(encode(carolPubkey))
-  })
 
   it('initialize multisig', async () => {
     const data = await multisig.initializeMultisig({ t, n, name, pubkeys })
