@@ -17,7 +17,7 @@ export interface WalletAdapter {
   privkey: Uint8Array
 
   getThreshold: () => WalletThreshold
-  getAddress: () => string
+  getShare: () => Uint8Array
   getPublicKey: () => Uint8Array
   getPrivateKey: () => string
   sign: (msg: Uint8Array) => Uint8Array
@@ -79,24 +79,21 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
     n: toNumber(this.n, 'le'),
   })
 
-  getAddress = () => {
-    return encode(this.pubkey)
-  }
+  getShare = () =>
+    SecretSharing.compress({
+      index: this.index,
+      t: this.t,
+      n: this.n,
+      id: this.id,
+      share: this.privkey,
+    })
 
   getPublicKey = () => {
     return this.pubkey
   }
 
   getPrivateKey = () =>
-    `eddsa/${encode(this.pubkey)}/${encode(
-      SecretSharing.compress({
-        index: this.index,
-        t: this.t,
-        n: this.n,
-        id: this.id,
-        share: this.privkey,
-      }),
-    )}`
+    `eddsa/${encode(this.masterkey)}/${encode(this.getShare())}`
 
   sign = (msg: Uint8Array): Uint8Array => {
     return ed.sync.sign(msg, this.privkey)
@@ -149,24 +146,21 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
     n: toNumber(this.n, 'be'),
   })
 
-  getAddress = () => {
-    return encode(this.pubkey)
-  }
+  getShare = () =>
+    SecretSharing.compress({
+      index: this.index,
+      t: this.t,
+      n: this.n,
+      id: this.id,
+      share: this.privkey,
+    })
 
   getPublicKey = () => {
     return this.pubkey
   }
 
   getPrivateKey = () =>
-    `ecdsa/${encode(this.pubkey)}/${encode(
-      SecretSharing.compress({
-        index: this.index,
-        t: this.t,
-        n: this.n,
-        id: this.id,
-        share: this.privkey,
-      }),
-    )}`
+    `ecdsa/${encode(this.masterkey)}/${encode(this.getShare())}`
 
   sign = (msg: Uint8Array): Uint8Array => {
     return ec.signSync(msg, this.privkey)

@@ -140,20 +140,20 @@ export class Proposal extends Connection {
   }
 
   /**
-   * Approve the proposal.
+   * Approve a proposal.
    * You will need to submit the commitment in the 1st round to be able to join the 2nd round of signing.
    * @param id Proposal id
    * @returns Proposal data
    */
   approveProposal = async (id: string): Promise<ProposalEntity> => {
     if (this.keypair.cryptosys === CryptoSys.EdDSA)
-      return this.approveEdTransactrion(id)
+      return this.approveEdTransaction(id)
     if (this.keypair.cryptosys === CryptoSys.ECDSA)
       return this.approveEcTransaction(id)
     throw new Error('Invalid crypto system')
   }
   // Approve Ed Transaction
-  private approveEdTransactrion = async (id: string) => {
+  private approveEdTransaction = async (id: string) => {
     const { msg, approvals, R } = await this.getProposal(id)
     const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.pubkey),

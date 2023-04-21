@@ -13,7 +13,6 @@ export const carolPrivkey = 'Bro7rv256G25xvsuY4dbRN2PiQtwR97RpeKAwXJTKfq'
 export const eddsa = {
   // Desig
   cluster: 'https://eddsa.desig.dev',
-  // cluster: 'http://localhost:10000',
   // Solana
   chain: new SolanaDevnet(),
 }
@@ -46,3 +45,8 @@ export const print = (...args: any[]) => {
   console.log('\x1b[36m↳\x1b[0m', ...args, '')
   console.groupEnd()
 }
+
+/**
+ * Randomize a number
+ */
+export const rand = () => Math.round(Math.random() * 10 ** 9)
