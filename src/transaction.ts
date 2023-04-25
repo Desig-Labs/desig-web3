@@ -3,8 +3,8 @@ import { Connection } from './connection'
 import { CryptoSys } from '@desig/supported-chains'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import { concatBytes } from '@noble/hashes/utils'
-import { decode, encode } from 'bs58'
 import { keccak_256 } from '@noble/hashes/sha3'
+import { decode, encode } from 'bs58'
 import {
   MultisigEntity,
   PaginationParams,
@@ -136,7 +136,7 @@ export class Transaction extends Connection {
     const elgamal = new ElGamal(EdCurve)
     const secretSharing = new SecretSharing(EdCurve.ff)
     const { msg, raw } = await this.getTransaction(id)
-    let sig = this.keypair.sign(decode(msg))
+    let sig = this.sign(decode(msg))
     sig = concatBytes(new Uint8Array([sig.length]), sig)
 
     const txData = decode(raw)
@@ -158,7 +158,7 @@ export class Transaction extends Connection {
         .subarray(8) // my index
         .subarray(32) // my pubkey
         .subarray(32, 64)
-      const z = EdCurve.ff.add(this.keypair.privkey, r)
+      const z = EdCurve.ff.add(this.keypair.share, r)
       sig = concatBytes(sig, z)
     } else if (txType === 'nReduction') {
       const offset = txData
@@ -174,7 +174,7 @@ export class Transaction extends Connection {
         .subarray(8) // my index
         .subarray(32) // my pubkey
         .subarray(32, 64)
-      const z = EdCurve.ff.add(this.keypair.privkey, r)
+      const z = EdCurve.ff.add(this.keypair.share, r)
       sig = concatBytes(sig, z)
     } else throw new Error('Invalid transaction type')
 
@@ -191,7 +191,7 @@ export class Transaction extends Connection {
     const elgamal = new ElGamal(ECCurve)
     const secretSharing = new SecretSharing(ECCurve.ff)
     const { msg, raw } = await this.getTransaction(id)
-    let sig = this.keypair.sign(decode(msg))
+    let sig = this.sign(decode(msg))
     sig = concatBytes(new Uint8Array([sig.length]), sig)
 
     const txData = decode(raw)
@@ -213,7 +213,7 @@ export class Transaction extends Connection {
         .subarray(8) // my index
         .subarray(32) // my pubkey
         .subarray(32, 64)
-      const z = ECCurve.ff.add(this.keypair.privkey, r)
+      const z = ECCurve.ff.add(this.keypair.share, r)
       sig = concatBytes(sig, z)
     } else if (txType === 'nReduction') {
       const offset = txData
@@ -229,7 +229,7 @@ export class Transaction extends Connection {
         .subarray(8) // my index
         .subarray(32) // my pubkey
         .subarray(32, 64)
-      const z = ECCurve.ff.add(this.keypair.privkey, r)
+      const z = ECCurve.ff.add(this.keypair.share, r)
       sig = concatBytes(sig, z)
     } else throw new Error('Invalid transaction type')
 

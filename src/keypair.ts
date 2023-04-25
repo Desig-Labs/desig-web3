@@ -1,9 +1,7 @@
-import { ECCurve, ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
+import { ECTSS, EdTSS, SecretSharing } from '@desig/core'
 import { CryptoSys, toSys } from '@desig/supported-chains'
 import { decode, encode } from 'bs58'
 import BN, { Endianness } from 'bn.js'
-import * as ec from '@noble/secp256k1'
-import * as ed from '@noble/ed25519'
 
 export type WalletThreshold = {
   t: number
@@ -13,14 +11,11 @@ export type WalletThreshold = {
 
 export interface WalletAdapter {
   readonly cryptosys: CryptoSys
-  pubkey: Uint8Array
-  privkey: Uint8Array
+  share: Uint8Array
 
   getThreshold: () => WalletThreshold
+  getSecret: () => string
   getShare: () => Uint8Array
-  getPublicKey: () => Uint8Array
-  getPrivateKey: () => string
-  sign: (msg: Uint8Array) => Uint8Array
   approve: (msg: Uint8Array) => Promise<Uint8Array>
 }
 
@@ -45,32 +40,26 @@ const toNumber = (a: Uint8Array, en: Endianness = 'le') => {
 export class DesigEdDSAKeypair implements MultisigWalletAdapter {
   public readonly cryptosys: CryptoSys = CryptoSys.EdDSA
   public masterkey: Uint8Array
-  public pubkey: Uint8Array
-  public privkey: Uint8Array
+  public share: Uint8Array
   public id: Uint8Array
   public index: Uint8Array
   public t: Uint8Array
   public n: Uint8Array
 
   constructor(secret: string) {
-    const [scheme, masterkey, share] = secret.split('/')
+    const [scheme, masterkey, shareString] = secret.split('/')
     if (this.cryptosys !== toSys(scheme))
       throw new Error('Invalid desig eddsa keypair')
 
     this.masterkey = decode(masterkey)
-    const {
-      share: privkey,
-      id,
-      index,
-      t,
-      n,
-    } = SecretSharing.extract(decode(share))
+    const { share, id, index, t, n } = SecretSharing.extract(
+      decode(shareString),
+    )
     this.id = id
     this.index = index
     this.t = t
     this.n = n
-    this.privkey = privkey
-    this.pubkey = EdCurve.getPublicKey(this.privkey)
+    this.share = share
   }
 
   getThreshold = () => ({
@@ -85,19 +74,10 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
       t: this.t,
       n: this.n,
       id: this.id,
-      share: this.privkey,
+      share: this.share,
     })
 
-  getPublicKey = () => {
-    return this.pubkey
-  }
-
-  getPrivateKey = () =>
-    `eddsa/${encode(this.masterkey)}/${encode(this.getShare())}`
-
-  sign = (msg: Uint8Array): Uint8Array => {
-    return ed.sync.sign(msg, this.privkey)
-  }
+  getSecret = () => `eddsa/${encode(this.masterkey)}/${encode(this.getShare())}`
 
   private preapprove = async (): Promise<{ R: Uint8Array; r: Uint8Array }> => {
     return { R: Uint8Array.from([]), r: Uint8Array.from([]) }
@@ -105,39 +85,33 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
 
   approve = async (msg: Uint8Array): Promise<Uint8Array> => {
     const { R, r } = await this.preapprove()
-    return EdTSS.sign(msg, R, this.masterkey, r, this.privkey)
+    return EdTSS.sign(msg, R, this.masterkey, r, this.share)
   }
 }
 
 export class DesigECDSAKeypair implements MultisigWalletAdapter {
   public cryptosys: CryptoSys = CryptoSys.ECDSA
   public masterkey: Uint8Array
-  public pubkey: Uint8Array
-  public privkey: Uint8Array
+  public share: Uint8Array
   public id: Uint8Array
   public index: Uint8Array
   public t: Uint8Array
   public n: Uint8Array
 
   constructor(secret: string) {
-    const [scheme, masterkey, share] = secret.split('/')
+    const [scheme, masterkey, shareString] = secret.split('/')
     if (this.cryptosys !== toSys(scheme))
       throw new Error('Invalid desig ecdsa keypair')
 
     this.masterkey = decode(masterkey)
-    const {
-      share: privkey,
-      id,
-      index,
-      t,
-      n,
-    } = SecretSharing.extract(decode(share))
+    const { share, id, index, t, n } = SecretSharing.extract(
+      decode(shareString),
+    )
     this.id = id
     this.index = index
     this.t = t
     this.n = n
-    this.privkey = privkey
-    this.pubkey = ECCurve.getPublicKey(this.privkey)
+    this.share = share
   }
 
   getThreshold = () => ({
@@ -152,19 +126,10 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
       t: this.t,
       n: this.n,
       id: this.id,
-      share: this.privkey,
+      share: this.share,
     })
 
-  getPublicKey = () => {
-    return this.pubkey
-  }
-
-  getPrivateKey = () =>
-    `ecdsa/${encode(this.masterkey)}/${encode(this.getShare())}`
-
-  sign = (msg: Uint8Array): Uint8Array => {
-    return ec.signSync(msg, this.privkey)
-  }
+  getSecret = () => `ecdsa/${encode(this.masterkey)}/${encode(this.getShare())}`
 
   private preapprove = async (): Promise<{ R: Uint8Array; z: Uint8Array }> => {
     return { R: Uint8Array.from([]), z: Uint8Array.from([]) }
@@ -172,6 +137,6 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
 
   approve = async (msg: Uint8Array): Promise<Uint8Array> => {
     const { R, z } = await this.preapprove()
-    return ECTSS.sign(R, z, this.privkey)
+    return ECTSS.sign(R, z, this.share)
   }
 }

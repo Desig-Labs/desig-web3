@@ -23,7 +23,12 @@ describe('eddsa: proposal', () => {
     const signer = new Signer(eddsa.cluster, CryptoSys.EdDSA, decode(privkey))
     const [{ id }] = await signer.getAllSigners()
     const keypair = await signer.getSignerKeypair(id)
-    return new Proposal(eddsa.cluster, CryptoSys.EdDSA, keypair)
+    return new Proposal(
+      eddsa.cluster,
+      CryptoSys.EdDSA,
+      decode(privkey),
+      keypair,
+    )
   }
 
   it('sol address', async () => {
@@ -94,7 +99,12 @@ describe('ecdsa: proposal', () => {
     const signer = new Signer(ecdsa.cluster, CryptoSys.ECDSA, decode(privkey))
     const [{ id }] = await signer.getAllSigners()
     const keypair = await signer.getSignerKeypair(id)
-    return new Proposal(ecdsa.cluster, CryptoSys.ECDSA, keypair)
+    return new Proposal(
+      ecdsa.cluster,
+      CryptoSys.ECDSA,
+      decode(privkey),
+      keypair,
+    )
   }
 
   it('eth address', async () => {

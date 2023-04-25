@@ -45,24 +45,20 @@ describe('eddsa: transaction', () => {
   })
 
   it('change name', async () => {
-    try {
-      const name = `The Dao #${rand()}`
-      const transaction = await alice.initializeTransaction({
-        type: 'changeName',
-        params: { name },
-      })
-      const transactionId = Transaction.deriveTransactionId(
-        transaction.multisig.id,
-        decode(transaction.msg),
-      )
-      await alice.signTransaction(transactionId)
-      await bob.signTransaction(transactionId)
-      const multisig = await bob.execTransaction(transactionId)
-      expect(transactionId).equal(transaction.id)
-      expect(name).equal(multisig.name)
-    } catch (er) {
-      console.log(er)
-    }
+    const name = `The Dao #${rand()}`
+    const transaction = await alice.initializeTransaction({
+      type: 'changeName',
+      params: { name },
+    })
+    const transactionId = Transaction.deriveTransactionId(
+      transaction.multisig.id,
+      decode(transaction.msg),
+    )
+    await alice.signTransaction(transactionId)
+    await bob.signTransaction(transactionId)
+    const multisig = await bob.execTransaction(transactionId)
+    expect(transactionId).equal(transaction.id)
+    expect(name).equal(multisig.name)
   })
 
   it('n-extension', async () => {

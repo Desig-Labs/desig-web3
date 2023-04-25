@@ -5,7 +5,6 @@ export type PaginationParams = {
 
 export type SignerEntity = {
   id: string
-  index: string
   activated: boolean
   owner: string
   encryptedShare: string

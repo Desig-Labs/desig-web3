@@ -2,9 +2,10 @@ import { sync } from '@noble/ed25519'
 import { EdCurve } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 import axios, { AxiosInstance } from 'axios'
-import { encode } from 'bs58'
+import { decode, encode } from 'bs58'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import type { MultisigEntity } from './types'
+import { concatBytes } from '@noble/hashes/utils'
 
 export class Connection {
   protected readonly connection: AxiosInstance
@@ -36,10 +37,11 @@ export class Connection {
     return encode(pubkey)
   }
 
-  get address() {
-    if (!this.keypair?.pubkey)
+  get index() {
+    if (!this.keypair)
       throw new Error('Cannot run this function without keypair')
-    return encode(this.keypair.pubkey)
+    const { index } = this.keypair.getThreshold()
+    return index
   }
 
   /**
@@ -63,7 +65,19 @@ export class Connection {
    * @returns The most current nonce
    */
   protected getNonce = async () => {
-    return this._nonce(this.address)
+    return this._nonce(this.index)
+  }
+
+  /**
+   * Sign the index-appended message
+   * (The signed message always is appended  by his/her index to prevent unintended transactions)
+   * @param message The signed message
+   * @returns Signature
+   */
+  protected sign = (message: Uint8Array) => {
+    const msg = concatBytes(decode(this.index), message)
+    const sig = sync.sign(msg, this.privkey)
+    return sig
   }
 
   /**
@@ -71,11 +85,11 @@ export class Connection {
    * @returns The Basic authorization header
    */
   protected getNonceAuthorization = async () => {
-    if (!this.keypair?.sign)
+    if (!this.privkey)
       throw new Error('Cannot run this function with a read-only keypair')
     const nonce = await this.getNonce()
-    const sig = this.keypair.sign(new TextEncoder().encode(String(nonce)))
-    const credential = `${this.address}/${encode(sig)}`
+    const sig = this.sign(new TextEncoder().encode(String(nonce)))
+    const credential = `${this.index}/${encode(sig)}`
     return `Bearer ${credential}`
   }
 

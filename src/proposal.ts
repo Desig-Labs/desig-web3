@@ -26,9 +26,10 @@ export class Proposal extends Connection {
   constructor(
     cluster: string,
     cryptosys: CryptoSys,
+    privkey: Uint8Array,
     keypair: DesigEdDSAKeypair | DesigECDSAKeypair,
   ) {
-    super(cluster, cryptosys, { keypair })
+    super(cluster, cryptosys, { privkey, keypair })
   }
 
   /**
@@ -156,14 +157,14 @@ export class Proposal extends Connection {
   private approveEdTransaction = async (id: string) => {
     const { msg, approvals, R } = await this.getProposal(id)
     const { randomness } = approvals.find(
-      ({ signer: { id } }) => id === encode(this.keypair.pubkey),
+      ({ signer: { id } }) => id === encode(this.keypair.index),
     )
     const signature = EdTSS.sign(
       decode(msg),
       decode(R),
       this.keypair.masterkey,
       decode(randomness).subarray(32),
-      this.keypair.privkey,
+      this.keypair.share,
     )
     const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.patch<ProposalEntity>(
@@ -177,12 +178,12 @@ export class Proposal extends Connection {
   private approveEcTransaction = async (id: string) => {
     const { approvals, R } = await this.getProposal(id)
     const { randomness } = approvals.find(
-      ({ signer: { id } }) => id === encode(this.keypair.pubkey),
+      ({ signer: { id } }) => id === encode(this.keypair.index),
     )
     const signature = ECTSS.sign(
       decode(R),
       decode(randomness).subarray(32),
-      this.keypair.privkey,
+      this.keypair.share,
     )
     const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.patch<ProposalEntity>(
@@ -219,7 +220,7 @@ export class Proposal extends Connection {
   // Finalize Ed Signature
   private finalizeEdSignature = async (approvals: ApprovalEntity[]) => {
     const secretSharing = new SecretSharing(EdTSS.ff)
-    const indice = approvals.map(({ signer: { index } }) => decode(index))
+    const indice = approvals.map(({ signer: { id } }) => decode(id))
     const pi = secretSharing.pi(indice)
     const sigs = approvals.map(({ signature }, i) =>
       concatBytes(
@@ -240,7 +241,7 @@ export class Proposal extends Connection {
     const multisigId = encode(this.keypair.masterkey)
     const { sqrpriv } = await multisig.getMultisig(multisigId)
     if (!sqrpriv) throw new Error('Invalid transaction')
-    const indice = signatures.map(({ signer: { index } }) => decode(index))
+    const indice = signatures.map(({ signer: { id } }) => decode(id))
     const pi = secretSharing.pi(indice)
     const sigs = signatures.map(({ signature }, i) =>
       secretSharing.yl(decode(signature), pi[i]),
