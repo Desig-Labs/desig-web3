@@ -74,7 +74,6 @@ export type ApprovalEventResponse = ApprovalEntity & {
 }
 
 export type TransactionType =
-  | 'changeName'
   | 'tExtension'
   | 'tReduction'
   | 'nExtension'

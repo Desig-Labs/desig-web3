@@ -1,4 +1,4 @@
-import { ECTSS, EdTSS, SecretSharing } from '@desig/core'
+import { ECCurve, ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
 import { CryptoSys, toSys } from '@desig/supported-chains'
 import { decode, encode } from 'bs58'
 import BN, { Endianness } from 'bn.js'
@@ -16,6 +16,7 @@ export interface WalletAdapter {
   getThreshold: () => WalletThreshold
   getSecret: () => string
   getShare: () => Uint8Array
+  proactivate: (zero: Uint8Array) => Uint8Array
   approve: (msg: Uint8Array) => Promise<Uint8Array>
 }
 
@@ -52,6 +53,10 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
       throw new Error('Invalid desig eddsa keypair')
 
     this.masterkey = decode(masterkey)
+    this.parseShareString(shareString)
+  }
+
+  private parseShareString = (shareString: string) => {
     const { share, id, index, t, n } = SecretSharing.extract(
       decode(shareString),
     )
@@ -79,6 +84,13 @@ export class DesigEdDSAKeypair implements MultisigWalletAdapter {
 
   getSecret = () => `eddsa/${encode(this.masterkey)}/${encode(this.getShare())}`
 
+  proactivate = (zero: Uint8Array) => {
+    const sss = new SecretSharing(EdCurve.ff)
+    const share = sss.merge(this.getShare(), zero)
+    this.parseShareString(encode(share))
+    return this.getShare()
+  }
+
   private preapprove = async (): Promise<{ R: Uint8Array; r: Uint8Array }> => {
     return { R: Uint8Array.from([]), r: Uint8Array.from([]) }
   }
@@ -104,6 +116,10 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
       throw new Error('Invalid desig ecdsa keypair')
 
     this.masterkey = decode(masterkey)
+    this.parseShareString(shareString)
+  }
+
+  private parseShareString = (shareString: string) => {
     const { share, id, index, t, n } = SecretSharing.extract(
       decode(shareString),
     )
@@ -130,6 +146,13 @@ export class DesigECDSAKeypair implements MultisigWalletAdapter {
     })
 
   getSecret = () => `ecdsa/${encode(this.masterkey)}/${encode(this.getShare())}`
+
+  proactivate = (zero: Uint8Array) => {
+    const sss = new SecretSharing(ECCurve.ff)
+    const share = sss.merge(this.getShare(), zero)
+    this.parseShareString(encode(share))
+    return this.getShare()
+  }
 
   private preapprove = async (): Promise<{ R: Uint8Array; z: Uint8Array }> => {
     return { R: Uint8Array.from([]), z: Uint8Array.from([]) }

@@ -56,7 +56,9 @@ export class Signer extends Connection {
       SignerEntity & { multisig: MultisigEntity }
     >(
       `/signer/${signerId}`,
-      {},
+      {
+        activated: true,
+      },
       {
         headers: {
           Authorization,
