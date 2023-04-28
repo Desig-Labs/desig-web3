@@ -4,7 +4,6 @@ import { CryptoSys } from '@desig/supported-chains'
 import axios, { AxiosInstance } from 'axios'
 import { decode, encode } from 'bs58'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
-import type { MultisigEntity } from './types'
 import { concatBytes } from '@noble/hashes/utils'
 
 export class Connection {
@@ -46,36 +45,28 @@ export class Connection {
 
   /**
    * Get current nonce of the keypair
-   * @param address Keypair's address
+   * Nonce is the incremental number of proposals & transactions
+   * @param signerId Signer if
    * @returns The most current nonce
    */
-  private _nonce = async (address: string): Promise<number> => {
-    const multisigId = encode(this.keypair.masterkey)
-    const {
-      data: { nonce },
-    } = await this.connection.get<MultisigEntity>(`/multisig/${multisigId}`)
-    if (typeof nonce !== 'number')
-      throw new Error(`Cannot get nonce of ${address} from ${this.cluster}`)
+  protected getNonce = async (signerId: string) => {
+    const Authorization = await this.getTimestampAuthorization()
+    const { data: nonce } = await this.connection.get<number>(
+      `/signer/nonce/${signerId}`,
+      { headers: { Authorization } },
+    )
     return nonce
-  }
-
-  /**
-   * Get current nonce of the keypair
-   * Nonce is the incremental hash (SHA512) of the pubkey
-   * @returns The most current nonce
-   */
-  protected getNonce = async () => {
-    return this._nonce(this.index)
   }
 
   /**
    * Sign the index-appended message
    * (The signed message always is appended  by his/her index to prevent unintended transactions)
    * @param message The signed message
+   * @param signerId The signer id
    * @returns Signature
    */
-  protected sign = (message: Uint8Array) => {
-    const msg = concatBytes(decode(this.index), message)
+  protected sign = (message: Uint8Array, signerId: Uint8Array) => {
+    const msg = concatBytes(signerId, message)
     const sig = sync.sign(msg, this.privkey)
     return sig
   }
@@ -86,9 +77,12 @@ export class Connection {
    */
   protected getNonceAuthorization = async () => {
     if (!this.privkey)
-      throw new Error('Cannot run this function with a read-only keypair')
-    const nonce = await this.getNonce()
-    const sig = this.sign(new TextEncoder().encode(String(nonce)))
+      throw new Error('Cannot run this function with a read-only mode')
+    const nonce = await this.getNonce(this.index)
+    const sig = this.sign(
+      new TextEncoder().encode(String(nonce)),
+      decode(this.index),
+    )
     const credential = `${this.index}/${encode(sig)}`
     return `Bearer ${credential}`
   }

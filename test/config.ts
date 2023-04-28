@@ -6,6 +6,7 @@ import { Goerli, SolanaDevnet } from '@desig/supported-chains'
 export const alicePrivkey = '41XjN7eYCDhmGFPXLEW8CrqsFnF7r2Kg9SERXP664WmJ'
 export const bobPrivkey = '4d24Hnff6irybALSpHXCsChsjfVUmbQEPxZkKCAhGXLB'
 export const carolPrivkey = 'Bro7rv256G25xvsuY4dbRN2PiQtwR97RpeKAwXJTKfq'
+export const eddyPrivkey = 'HcACvzN7TZW7qCzMpFW6udQug8iPvWBVwtB472xVm1yK'
 
 /**
  * EdDSA utils

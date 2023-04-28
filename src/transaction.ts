@@ -69,8 +69,8 @@ export class Transaction extends Connection {
    * @returns Transaction data
    */
   getTransactions = async (
-    { approved }: Partial<{ approved: boolean }>,
-    { offset = 0, limit = 500 }: Partial<PaginationParams>,
+    { approved }: Partial<{ approved: boolean }> = {},
+    { offset = 0, limit = 500 }: Partial<PaginationParams> = {},
   ): Promise<TransactionEntity[]> => {
     const Authorization = await this.getNonceAuthorization()
     let url = `/transaction?limit=${limit}&offset=${offset}`
@@ -138,12 +138,12 @@ export class Transaction extends Connection {
     const secretSharing = new SecretSharing(curve.ff)
     const { msg, raw } = await this.getTransaction(id)
     // Auth signature
-    let sig = this.sign(decode(msg))
+    let sig = this.sign(decode(msg), decode(this.index))
     sig = concatBytes(new Uint8Array([sig.length]), sig)
     // Handle transaction
     const txData = decode(raw)
     const txType = selector.getType(txData.subarray(0, 8))
-    // n-Extension
+    // n-Extension: Publish z = s + r
     if (txType === 'nExtension') {
       const offset = txData
         .subarray(64)
@@ -160,22 +160,8 @@ export class Transaction extends Connection {
       const z = curve.ff.add(this.keypair.share, r)
       sig = concatBytes(sig, z)
     }
-    // n-Reduction
+    // n-Reduction: Do nothing
     else if (txType === 'nReduction') {
-      const offset = txData
-        .subarray(64)
-        .findIndex(
-          (_, i, o) =>
-            i % 136 === 0 &&
-            Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
-        )
-      const r = txData
-        .subarray(64) // multisig info
-        .subarray(offset) // my offset
-        .subarray(8) // my index
-        .subarray(32, 64)
-      const z = curve.ff.add(this.keypair.share, r)
-      sig = concatBytes(sig, z)
     }
     // Invalid transaction type
     else throw new Error('Invalid transaction type')
@@ -218,9 +204,8 @@ export class Transaction extends Connection {
     else if (this.cryptosys === CryptoSys.ECDSA) curve = ECCurve
     else throw new Error('Invalid crypto system')
     const selector = new Selector()
-    const signer = new Signer(this.cluster, this.cryptosys, this.privkey)
 
-    const txs = await this.getTransactions({ approved: true }, {})
+    const txs = await this.getTransactions({ approved: true })
     const currentId = encode(this.keypair.id)
     const currentIndex = txs.findIndex(
       ({ raw }) => encode(decode(raw).subarray(8, 16)) === currentId,
@@ -232,8 +217,9 @@ export class Transaction extends Connection {
       const tx = decode(raw)
       const txType = selector.getType(tx.subarray(0, 8))
       const txGid = encode(tx.subarray(8, 16))
-      const txData = tx.subarray(64)
+      // n-Extension
       if (txType === 'nExtension') {
+        const txData = tx.subarray(64)
         const offset = txData.findIndex(
           (_, i, o) =>
             i % 136 === 0 &&
@@ -243,11 +229,23 @@ export class Transaction extends Connection {
         this.keypair.proactivate(
           concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
         )
-      } else if (txType === 'nReduction') {
+      }
+      // n-Reduction
+      else if (txType === 'nReduction') {
+        const txData = tx.subarray(40)
+        const offset = txData.findIndex(
+          (_, i, o) =>
+            i % 72 === 0 &&
+            Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
+        )
+        const zero = txData.subarray(offset).subarray(8).subarray(0, 64)
+        this.keypair.proactivate(
+          concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
+        )
       } else if (txType === 'tExtension') {
       } else if (txType === 'tReduction') {
       } else throw new Error('Invalid Desig transaction type')
-      console.log(id, txType, txGid, txData.length)
+      console.log(id, txType, txGid)
     }
 
     const elgamal = new ExtendedElGamal()

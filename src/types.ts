@@ -6,6 +6,7 @@ export type PaginationParams = {
 export type SignerEntity = {
   id: string
   activated: boolean
+  generic: string
   owner: string
   encryptedShare: string
   multisig: MultisigEntity
@@ -79,6 +80,6 @@ export type TransactionType =
   | 'nExtension'
   | 'nReduction'
 export type TransactionParams = {
-  name?: string
+  index?: string
   pubkey?: string
 }

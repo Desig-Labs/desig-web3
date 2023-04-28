@@ -6,12 +6,13 @@ import {
   carolPrivkey,
   ecdsa,
   eddsa,
+  eddyPrivkey,
   print,
   rand,
 } from './config'
 import { decode, encode } from 'bs58'
 import { expect } from 'chai'
-import { ECCurve, EdCurve } from '@desig/core'
+import { ECCurve, EdCurve, SecretSharing } from '@desig/core'
 
 // describe('eddsa: transaction', () => {
 //   let alice: Transaction
@@ -94,7 +95,7 @@ import { ECCurve, EdCurve } from '@desig/core'
 //   })
 
 //   it('get transactions', async () => {
-//     const transactions = await alice.getTransactions({})
+//     const transactions = await alice.getTransactions()
 //     expect(transactions.length).is.greaterThan(0)
 //   })
 // })
@@ -103,7 +104,6 @@ describe('ecdsa: transaction', () => {
   let alice: Transaction
   let bob: Transaction
   let carol: Transaction
-  const eddyPrivkey = encode(EdCurve.ff.rand())
   const eddyPubkey = encode(EdCurve.getPublicKey(decode(eddyPrivkey)))
   let multisigId = ''
 
@@ -130,40 +130,78 @@ describe('ecdsa: transaction', () => {
     expect(multisigId).equal(encode(carol.keypair!.masterkey))
   })
 
-  // it('n-extension', async () => {
-  //   const transaction = await alice.initializeTransaction({
-  //     type: 'nExtension',
-  //     params: { pubkey: eddyPubkey },
-  //   })
-  //   const transactionId = Transaction.deriveTransactionId(transaction.msg)
-  //   await alice.signTransaction(transactionId)
-  //   await bob.signTransaction(transactionId)
-  //   const { n } = await bob.execTransaction(transactionId)
-  //   console.log(n)
-  // })
-
-  it('sync n-extension', async () => {
-    await alice.syncTransaction()
+  it('n-extension', async () => {
+    // Add Eddy
+    const transaction = await alice.initializeTransaction({
+      type: 'nExtension',
+      params: { pubkey: eddyPubkey },
+    })
+    const transactionId = Transaction.deriveTransactionId(transaction.msg)
+    await alice.signTransaction(transactionId)
+    await bob.signTransaction(transactionId)
+    const { n } = await bob.execTransaction(transactionId)
+    // Activate Eddy
+    const eddySigner = new Signer(
+      ecdsa.cluster,
+      CryptoSys.ECDSA,
+      decode(eddyPrivkey),
+    )
+    const signers = await eddySigner.getAllSigners({ multisigId })
+    await Promise.all(
+      signers.map(async ({ id }) => {
+        await eddySigner.activateSigner(id)
+      }),
+    )
+    // Assert
+    expect(n).equal(4)
   })
 
-  // it('n-reduction', async () => {
-  //   const transaction = await alice.initializeTransaction({
-  //     type: 'nReduction',
-  //     params: { pubkey: eddyPubkey },
-  //   })
-  //   const transactionId = Transaction.deriveTransactionId(
-  //     transaction.multisig.id,
-  //     decode(transaction.msg),
-  //   )
-  //   await alice.signTransaction(transactionId)
-  //   await bob.signTransaction(transactionId)
-  //   const { n } = await bob.execTransaction(transactionId)
-  //   expect(transactionId).equal(transaction.id)
-  //   expect(n).equal(3)
-  // })
+  it('sync n-extension: alice, bob, eddy', async () => {
+    const eddy = await initLastTransactionInstance(eddyPrivkey)
+    await alice.syncTransaction()
+    await bob.syncTransaction()
+    await eddy.syncTransaction()
+    if (!alice.keypair || !bob.keypair || !eddy.keypair)
+      throw new Error('Invalid keypair')
+    const sss = new SecretSharing(ECCurve.ff)
+    const derkey = sss.construct([
+      alice.keypair.getShare(),
+      bob.keypair.getShare(),
+      eddy.keypair.getShare(),
+    ])
+    const pubkey = ECCurve.getPublicKey(derkey, true)
+    expect(encode(pubkey)).equal(encode(alice.keypair.masterkey))
+  })
+
+  it('n-reduction', async () => {
+    const eddy = await initLastTransactionInstance(eddyPrivkey)
+    const transaction = await alice.initializeTransaction({
+      type: 'nReduction',
+      params: { index: eddy.index },
+    })
+    const transactionId = Transaction.deriveTransactionId(transaction.msg)
+    await alice.signTransaction(transactionId)
+    await bob.signTransaction(transactionId)
+    const { n } = await bob.execTransaction(transactionId)
+    // Assert
+    expect(n).equal(3)
+  })
+
+  it('sync n-reduction', async () => {
+    await alice.syncTransaction()
+    await bob.syncTransaction()
+    if (!alice.keypair || !bob.keypair) throw new Error('Invalid keypair')
+    const sss = new SecretSharing(ECCurve.ff)
+    const derkey = sss.construct([
+      alice.keypair.getShare(),
+      bob.keypair.getShare(),
+    ])
+    const pubkey = ECCurve.getPublicKey(derkey, true)
+    expect(encode(pubkey)).equal(encode(alice.keypair.masterkey))
+  })
 
   // it('get transactions', async () => {
-  //   const transactions = await alice.getTransactions({}, {})
+  //   const transactions = await alice.getTransactions()
   //   expect(transactions.length).is.greaterThan(0)
   // })
 })

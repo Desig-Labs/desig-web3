@@ -1,9 +1,10 @@
-import { ExtendedElGamal } from '@desig/core'
-import { CryptoSys } from '@desig/supported-chains'
-import { decode } from 'bs58'
+import { ECCurve, ElGamal, ExtendedElGamal, SecretSharing } from '@desig/core'
+import { CryptoSys, toScheme } from '@desig/supported-chains'
+import { decode, encode } from 'bs58'
 import { Connection } from './connection'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
-import type { MultisigEntity, SignerEntity } from './types'
+import type { MultisigEntity, SignerEntity, TransactionEntity } from './types'
+import { concatBytes } from '@noble/hashes/utils'
 
 export class Signer extends Connection {
   constructor(cluster: string, cryptosys: CryptoSys, privkey: Uint8Array) {
@@ -14,9 +15,12 @@ export class Signer extends Connection {
    * Get all signers data
    * @returns Signer data
    */
-  getAllSigners = async (): Promise<SignerEntity[]> => {
+  getAllSigners = async (
+    filter: Partial<{ multisigId: string }> = {},
+  ): Promise<SignerEntity[]> => {
     const Authorization = await this.getTimestampAuthorization()
     const { data } = await this.connection.get<SignerEntity[]>(`/signer`, {
+      params: filter,
       headers: {
         Authorization,
       },
@@ -51,14 +55,79 @@ export class Signer extends Connection {
   activateSigner = async (
     signerId: string,
   ): Promise<SignerEntity & { multisig: MultisigEntity }> => {
+    let { encryptedShare, generic } = await this.getSigner(signerId)
+    if (!encryptedShare) {
+      const elgamal = new ExtendedElGamal()
+      const sss = new SecretSharing(
+        this.cryptosys === CryptoSys.ECDSA ? ECCurve.ff : ECCurve.ff,
+      )
+      // Get boarding transaction
+      const nonce = await this.getNonce(signerId)
+      const sig = this.sign(
+        new TextEncoder().encode(String(nonce)),
+        decode(signerId),
+      )
+      const credential = `${signerId}/${encode(sig)}`
+      const Authorization = `Bearer ${credential}`
+      const {
+        data: {
+          raw,
+          signatures,
+          multisig: { id: multisigId },
+        },
+      } = await this.connection.get<TransactionEntity>(
+        `/transaction/${generic}`,
+        { headers: { Authorization } },
+      )
+      // Compute the share
+      const txData = decode(raw)
+      const k = txData.subarray(txData.length - 136).subarray(0, 8)
+      const gid = txData.subarray(8, 16)
+      const t = txData.subarray(16, 24)
+      const n = sss.ff.decode(
+        sss.ff.encode(txData.subarray(24, 32)).redSub(sss.ff.ONE),
+        8,
+      )
+      const z = sss.interpolate(
+        k,
+        signatures
+          .filter(({ signature }) => !!signature)
+          .map(({ signature, signer: { id } }) => [
+            decode(id),
+            decode(signature),
+          ])
+          .map(([index, commitment]) => {
+            const siglen = commitment[0]
+            return concatBytes(
+              index,
+              t,
+              n,
+              gid,
+              commitment.subarray(1).subarray(siglen),
+            )
+          }),
+      )
+      const r = txData
+        .subarray(txData.length - 136)
+        .subarray(8)
+        .subarray(32, 64) // Replace elgamal dycryption here
+      const s = sss.ff.sub(z, r)
+      const share = concatBytes(k, t, n, gid, s)
+      const secret = `${toScheme(this.cryptosys)}/${multisigId}/${encode(
+        share,
+      )}`
+      // Encrypt the share
+      encryptedShare = encode(
+        elgamal.encrypt(new TextEncoder().encode(secret), decode(this.owner)),
+      )
+    }
+    // Activate the signer
     const Authorization = await this.getTimestampAuthorization()
     const { data } = await this.connection.patch<
       SignerEntity & { multisig: MultisigEntity }
     >(
       `/signer/${signerId}`,
-      {
-        activated: true,
-      },
+      { activated: true, encryptedShare },
       {
         headers: {
           Authorization,
