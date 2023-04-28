@@ -234,6 +234,33 @@ describe('ecdsa: transaction', () => {
     expect(encode(pubkey)).equal(encode(alice.keypair.masterkey))
   })
 
+  it('t-reduction', async () => {
+    const transaction = await alice.initializeTransaction({
+      type: 'tReduction',
+      params: {},
+    })
+    const transactionId = Transaction.deriveTransactionId(transaction.msg)
+    await alice.signTransaction(transactionId)
+    await bob.signTransaction(transactionId)
+    await carol.signTransaction(transactionId)
+    const { t } = await bob.execTransaction(transactionId)
+    // Assert
+    expect(t).equal(2)
+  })
+
+  it('sync t-reduction: alice, bob', async () => {
+    await alice.syncTransaction()
+    await bob.syncTransaction()
+    if (!alice.keypair || !bob.keypair) throw new Error('Invalid keypair')
+    const sss = new SecretSharing(ECCurve.ff)
+    const derkey = sss.construct([
+      alice.keypair.getShare(),
+      bob.keypair.getShare(),
+    ])
+    const pubkey = ECCurve.getPublicKey(derkey, true)
+    expect(encode(pubkey)).equal(encode(alice.keypair.masterkey))
+  })
+
   // it('get transactions', async () => {
   //   const transactions = await alice.getTransactions()
   //   expect(transactions.length).is.greaterThan(0)
