@@ -163,6 +163,9 @@ export class Transaction extends Connection {
     // n-Reduction: Do nothing
     else if (txType === 'nReduction') {
     }
+    // t-Extension: Do nothing
+    else if (txType === 'tExtension') {
+    }
     // Invalid transaction type
     else throw new Error('Invalid transaction type')
     // Submit result
@@ -242,7 +245,19 @@ export class Transaction extends Connection {
         this.keypair.proactivate(
           concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
         )
-      } else if (txType === 'tExtension') {
+      }
+      // t-Extension
+      else if (txType === 'tExtension') {
+        const txData = tx.subarray(32)
+        const offset = txData.findIndex(
+          (_, i, o) =>
+            i % 72 === 0 &&
+            Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
+        )
+        const zero = txData.subarray(offset).subarray(8).subarray(0, 64)
+        this.keypair.proactivate(
+          concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
+        )
       } else if (txType === 'tReduction') {
       } else throw new Error('Invalid Desig transaction type')
       console.log(id, txType, txGid)

@@ -173,6 +173,36 @@ describe('ecdsa: transaction', () => {
     expect(encode(pubkey)).equal(encode(alice.keypair.masterkey))
   })
 
+  it('t-extension', async () => {
+    const transaction = await alice.initializeTransaction({
+      type: 'tExtension',
+      params: {},
+    })
+    const transactionId = Transaction.deriveTransactionId(transaction.msg)
+    await alice.signTransaction(transactionId)
+    await bob.signTransaction(transactionId)
+    const { t } = await bob.execTransaction(transactionId)
+    // Assert
+    expect(t).equal(3)
+  })
+
+  it('sync t-extension: alice, bob, eddy', async () => {
+    const eddy = await initLastTransactionInstance(eddyPrivkey)
+    await alice.syncTransaction()
+    await bob.syncTransaction()
+    await eddy.syncTransaction()
+    if (!alice.keypair || !bob.keypair || !eddy.keypair)
+      throw new Error('Invalid keypair')
+    const sss = new SecretSharing(ECCurve.ff)
+    const derkey = sss.construct([
+      alice.keypair.getShare(),
+      bob.keypair.getShare(),
+      eddy.keypair.getShare(),
+    ])
+    const pubkey = ECCurve.getPublicKey(derkey, true)
+    expect(encode(pubkey)).equal(encode(alice.keypair.masterkey))
+  })
+
   it('n-reduction', async () => {
     const eddy = await initLastTransactionInstance(eddyPrivkey)
     const transaction = await alice.initializeTransaction({
@@ -182,19 +212,23 @@ describe('ecdsa: transaction', () => {
     const transactionId = Transaction.deriveTransactionId(transaction.msg)
     await alice.signTransaction(transactionId)
     await bob.signTransaction(transactionId)
+    await eddy.signTransaction(transactionId)
     const { n } = await bob.execTransaction(transactionId)
     // Assert
     expect(n).equal(3)
   })
 
-  it('sync n-reduction', async () => {
+  it('sync n-reduction: alice, bob, carol', async () => {
     await alice.syncTransaction()
     await bob.syncTransaction()
-    if (!alice.keypair || !bob.keypair) throw new Error('Invalid keypair')
+    await carol.syncTransaction()
+    if (!alice.keypair || !bob.keypair || !carol.keypair)
+      throw new Error('Invalid keypair')
     const sss = new SecretSharing(ECCurve.ff)
     const derkey = sss.construct([
       alice.keypair.getShare(),
       bob.keypair.getShare(),
+      carol.keypair.getShare(),
     ])
     const pubkey = ECCurve.getPublicKey(derkey, true)
     expect(encode(pubkey)).equal(encode(alice.keypair.masterkey))
