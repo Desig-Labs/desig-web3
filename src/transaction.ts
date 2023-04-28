@@ -72,11 +72,15 @@ export class Transaction extends Connection {
     { offset = 0, limit = 500 }: Partial<PaginationParams> = {},
   ): Promise<TransactionEntity[]> => {
     const Authorization = await this.getNonceAuthorization()
-    let url = `/transaction?limit=${limit}&offset=${offset}`
-    if (typeof approved === 'boolean') url = `${url}&approved=${approved}`
-    const { data } = await this.connection.get<TransactionEntity[]>(url, {
-      headers: { Authorization },
-    })
+    const params: PaginationParams & any = { limit, offset }
+    if (typeof approved === 'boolean') params.approved = approved
+    const { data } = await this.connection.get<TransactionEntity[]>(
+      '/transaction',
+      {
+        params,
+        headers: { Authorization },
+      },
+    )
     return data
   }
 

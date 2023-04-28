@@ -91,10 +91,10 @@ export class Proposal extends Connection {
     limit = 500,
   }: Partial<PaginationParams>): Promise<ProposalEntity[]> => {
     const Authorization = await this.getNonceAuthorization()
-    const { data } = await this.connection.get<ProposalEntity[]>(
-      `/proposal?limit=${limit}&offset=${offset}`,
-      { headers: { Authorization } },
-    )
+    const { data } = await this.connection.get<ProposalEntity[]>('/proposal', {
+      params: { limit, offset },
+      headers: { Authorization },
+    })
     return data
   }
 
