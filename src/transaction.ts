@@ -13,7 +13,13 @@ import {
   TransactionParams,
   TransactionType,
 } from './types'
-import { ECCurve, EdCurve, ExtendedElGamal, SecretSharing } from '@desig/core'
+import {
+  ECCurve,
+  EdCurve,
+  ElGamal,
+  ExtendedElGamal,
+  SecretSharing,
+} from '@desig/core'
 
 export class Selector {
   private selectors: Record<TransactionType, Uint8Array> = {
@@ -132,7 +138,7 @@ export class Transaction extends Connection {
   signTransaction = async (id: string): Promise<TransactionEntity> => {
     // Heroes
     const selector = new Selector()
-    const elgamal = new ExtendedElGamal()
+    const elgamal = new ElGamal()
     const { msg, raw } = await this.getTransaction(id)
     // Auth signature
     let sig = this.sign(decode(msg), decode(this.index))
@@ -149,11 +155,14 @@ export class Transaction extends Connection {
             i % 136 === 0 &&
             Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
         )
-      const r = txData
-        .subarray(64) // multisig info
-        .subarray(offset) // my offset
-        .subarray(8) // my index
-        .subarray(32, 64)
+      const r = elgamal.decrypt(
+        txData
+          .subarray(64) // multisig info
+          .subarray(offset) // my offset
+          .subarray(8) // my index
+          .subarray(0, 64),
+        this.privkey,
+      )
       const z = this.sss.ff.add(this.keypair.share, r)
       sig = concatBytes(sig, z)
     }
@@ -172,11 +181,14 @@ export class Transaction extends Connection {
             i % 136 === 0 &&
             Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
         )
-      const r = txData
-        .subarray(32) // multisig info
-        .subarray(offset) // my offset
-        .subarray(8) // my index
-        .subarray(32, 64)
+      const r = elgamal.decrypt(
+        txData
+          .subarray(32) // multisig info
+          .subarray(offset) // my offset
+          .subarray(8) // my index
+          .subarray(0, 64),
+        this.privkey,
+      )
       const z = this.sss.ff.add(this.keypair.share, r)
       sig = concatBytes(sig, z)
     }
@@ -216,6 +228,8 @@ export class Transaction extends Connection {
     SignerEntity & { multisig: MultisigEntity }
   > => {
     const selector = new Selector()
+    const extendedElgamal = new ExtendedElGamal()
+    const elgamal = new ElGamal()
     const txs = await this.getTransactions({ approved: true })
     const currentId = encode(this.keypair.id)
     const currentIndex = txs.findIndex(
@@ -237,9 +251,12 @@ export class Transaction extends Connection {
             i % 136 === 0 &&
             Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
         )
-        const zero = txData.subarray(offset).subarray(8).subarray(64, 128)
+        const zero = elgamal.decrypt(
+          txData.subarray(offset).subarray(8).subarray(64, 128),
+          this.privkey,
+        )
         this.keypair.proactivate(
-          concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
+          concatBytes(this.keypair.index, t, n, decode(id), zero),
         )
       }
       // n-Reduction
@@ -250,9 +267,12 @@ export class Transaction extends Connection {
             i % 72 === 0 &&
             Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
         )
-        const zero = txData.subarray(offset).subarray(8).subarray(0, 64)
+        const zero = elgamal.decrypt(
+          txData.subarray(offset).subarray(8).subarray(0, 64),
+          this.privkey,
+        )
         this.keypair.proactivate(
-          concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
+          concatBytes(this.keypair.index, t, n, decode(id), zero),
         )
       }
       // t-Extension
@@ -263,9 +283,12 @@ export class Transaction extends Connection {
             i % 72 === 0 &&
             Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
         )
-        const zero = txData.subarray(offset).subarray(8).subarray(0, 64)
+        const zero = elgamal.decrypt(
+          txData.subarray(offset).subarray(8).subarray(0, 64),
+          this.privkey,
+        )
         this.keypair.proactivate(
-          concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
+          concatBytes(this.keypair.index, t, n, decode(id), zero),
         )
       }
       // t-Reduction
@@ -276,7 +299,10 @@ export class Transaction extends Connection {
             i % 136 === 0 &&
             Buffer.compare(o.subarray(i, i + 8), this.keypair.index) === 0,
         )
-        const zero = txData.subarray(offset).subarray(8).subarray(64, 128)
+        const zero = elgamal.decrypt(
+          txData.subarray(offset).subarray(8).subarray(64, 128),
+          this.privkey,
+        )
         const shares = signatures
           .filter(({ signature }) => !!signature)
           .map(({ signature, signer: { id } }) => [
@@ -298,17 +324,16 @@ export class Transaction extends Connection {
           ),
         )
         this.keypair.proactivate(
-          concatBytes(zero.subarray(0, 24), decode(id), z),
+          concatBytes(this.keypair.index, t, n, decode(id), z),
         )
         this.keypair.proactivate(
-          concatBytes(zero.subarray(0, 24), decode(id), zero.subarray(32, 64)),
+          concatBytes(this.keypair.index, t, n, decode(id), zero),
         )
       } else throw new Error('Invalid Desig transaction type')
     }
 
-    const elgamal = new ExtendedElGamal()
     const encryptedShare = encode(
-      elgamal.encrypt(
+      extendedElgamal.encrypt(
         new TextEncoder().encode(this.keypair.getSecret()),
         decode(this.owner),
       ),

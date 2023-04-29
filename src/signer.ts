@@ -1,4 +1,10 @@
-import { ECCurve, EdCurve, ExtendedElGamal, SecretSharing } from '@desig/core'
+import {
+  ECCurve,
+  EdCurve,
+  ElGamal,
+  ExtendedElGamal,
+  SecretSharing,
+} from '@desig/core'
 import { CryptoSys, toScheme } from '@desig/supported-chains'
 import { decode, encode } from 'bs58'
 import { Connection } from './connection'
@@ -64,7 +70,8 @@ export class Signer extends Connection {
   ): Promise<SignerEntity & { multisig: MultisigEntity }> => {
     let { encryptedShare, generic } = await this.getSigner(signerId)
     if (!encryptedShare) {
-      const elgamal = new ExtendedElGamal()
+      const extendedElgamal = new ExtendedElGamal()
+      const elgamal = new ElGamal()
       // Get boarding transaction
       const nonce = await this.getNonce(signerId)
       const sig = this.sign(
@@ -106,10 +113,13 @@ export class Signer extends Connection {
             return concatBytes(index, t, n, gid, c)
           }),
       )
-      const r = txData
-        .subarray(txData.length - 136)
-        .subarray(8)
-        .subarray(32, 64) // Replace elgamal dycryption here
+      const r = elgamal.decrypt(
+        txData
+          .subarray(txData.length - 136)
+          .subarray(8)
+          .subarray(0, 64),
+        this.privkey,
+      )
       const s = this.sss.ff.sub(z, r)
       const share = concatBytes(k, t, n, gid, s)
       const secret = `${toScheme(this.cryptosys)}/${multisigId}/${encode(
@@ -117,7 +127,10 @@ export class Signer extends Connection {
       )}`
       // Encrypt the share
       encryptedShare = encode(
-        elgamal.encrypt(new TextEncoder().encode(secret), decode(this.owner)),
+        extendedElgamal.encrypt(
+          new TextEncoder().encode(secret),
+          decode(this.owner),
+        ),
       )
     }
     // Activate the signer
