@@ -68,7 +68,7 @@ export class Signer extends Connection {
   activateSigner = async (
     signerId: string,
   ): Promise<SignerEntity & { multisig: MultisigEntity }> => {
-    let { encryptedShare, generic } = await this.getSigner(signerId)
+    let { encryptedShare, genesis } = await this.getSigner(signerId)
     if (!encryptedShare) {
       const extendedElgamal = new ExtendedElGamal()
       const elgamal = new ElGamal()
@@ -87,7 +87,7 @@ export class Signer extends Connection {
           multisig: { id: multisigId },
         },
       } = await this.connection.get<TransactionEntity>(
-        `/transaction/${generic}`,
+        `/transaction/${genesis}`,
         { headers: { Authorization } },
       )
       // Compute the share
