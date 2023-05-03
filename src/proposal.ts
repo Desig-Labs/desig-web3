@@ -17,7 +17,7 @@ import type {
 
 export const APPROVAL_EVENTS: ApprovalEvents[] = [
   'insertApproval',
-  'updateSignature',
+  'updateApproval',
 ]
 
 export class Proposal extends Connection {

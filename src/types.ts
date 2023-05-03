@@ -69,9 +69,14 @@ export type TransactionEntity = {
   updatedAt: Date
 }
 
-export type ApprovalEvents = 'insertApproval' | 'updateSignature'
+export type ApprovalEvents = 'insertApproval' | 'updateApproval'
 export type ApprovalEventResponse = ApprovalEntity & {
   proposal: Omit<ProposalEntity, 'approvals'>
+}
+
+export type SignatureEvents = 'insertSignature' | 'updateSignature'
+export type SignatureEventResponse = SignatureEntity & {
+  transaction: Omit<TransactionEntity, 'signatures'>
 }
 
 export type TransactionType =

@@ -1,4 +1,11 @@
-import { Socket } from 'socket.io-client'
+import {
+  ECCurve,
+  EdCurve,
+  ElGamal,
+  ExtendedElGamal,
+  SecretSharing,
+} from '@desig/core'
+import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
 import { CryptoSys } from '@desig/supported-chains'
 import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
@@ -8,18 +15,18 @@ import { decode, encode } from 'bs58'
 import {
   MultisigEntity,
   PaginationParams,
+  SignatureEvents,
   SignerEntity,
   TransactionEntity,
   TransactionParams,
   TransactionType,
 } from './types'
-import {
-  ECCurve,
-  EdCurve,
-  ElGamal,
-  ExtendedElGamal,
-  SecretSharing,
-} from '@desig/core'
+import { SignatureEventResponse } from './types'
+
+export const SIGNATURE_EVENTS: SignatureEvents[] = [
+  'insertSignature',
+  'updateSignature',
+]
 
 export class Selector {
   private selectors: Record<TransactionType, Uint8Array> = {
@@ -66,6 +73,43 @@ export class Transaction extends Connection {
    */
   static deriveTransactionId = (msg: string) =>
     encode(decode(msg).subarray(0, 8))
+
+  /**
+   * Initialize a socket
+   */
+  private initSocket = () => {
+    if (this.keypair) {
+      if (!this.socket)
+        this.socket = io(this.cluster, {
+          auth: async (cb) => {
+            const Authorization = await this.getNonceAuthorization()
+            return cb({ Authorization })
+          },
+        })
+      this.socket.emit('transaction')
+    } else this.socket = undefined
+    return this.socket
+  }
+
+  /**
+   * Watch approval changes
+   * @param callback Callback event
+   */
+  watch = (
+    callback: (event: SignatureEvents, data: SignatureEventResponse) => void,
+  ) => {
+    const socket = this.initSocket()
+    SIGNATURE_EVENTS.forEach((event) =>
+      socket.on(event, (res: SignatureEventResponse) => callback(event, res)),
+    )
+  }
+
+  /**
+   * Unwatch approval changes
+   */
+  unwatch = () => {
+    this.socket.disconnect()
+  }
 
   /**
    * Get transactions data. Note that it's only about multisig info.
