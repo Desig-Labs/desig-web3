@@ -18,29 +18,29 @@ const pubkeys = [
   encode(EdCurve.getPublicKey(decode(carolPrivkey))),
 ]
 
-// describe('eddsa: multisig', () => {
-//   const multisig = new Multisig(eddsa.cluster, CryptoSys.EdDSA)
-//   const t = 2
-//   const n = 3
-//   const name = `The Dao #${rand()}`
-//   let multisigId = ''
+describe('eddsa: multisig', () => {
+  const multisig = new Multisig(eddsa.cluster, CryptoSys.EdDSA)
+  const t = 2
+  const n = 3
+  const name = `The Dao #${rand()}`
+  let multisigId = ''
 
-//   it('initialize multisig', async () => {
-//     const data = await multisig.initializeMultisig({ t, n, name, pubkeys })
-//     multisigId = data.id
-//     expect(data.name).equals(name)
-//     expect(data.t).equals(t)
-//     expect(data.n).equals(n)
-//     expect(multisigId).to.not.empty
-//   })
+  it('initialize multisig', async () => {
+    const data = await multisig.initializeMultisig({ t, n, name, pubkeys })
+    multisigId = data.id
+    expect(data.name).equals(name)
+    expect(data.t).equals(t)
+    expect(data.n).equals(n)
+    expect(multisigId).to.not.empty
+  })
 
-//   it('fecth multsig', async () => {
-//     const data = await multisig.getMultisig(multisigId)
-//     expect(data.name).equals(name)
-//     expect(data.t).equals(t)
-//     expect(data.n).equals(n)
-//   })
-// })
+  it('fecth multsig', async () => {
+    const data = await multisig.getMultisig(multisigId)
+    expect(data.name).equals(name)
+    expect(data.t).equals(t)
+    expect(data.n).equals(n)
+  })
+})
 
 describe('ecdsa: multisig', () => {
   const multisig = new Multisig(ecdsa.cluster, CryptoSys.ECDSA)

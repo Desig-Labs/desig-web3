@@ -172,7 +172,7 @@ export class Transaction extends Connection {
     // t-Extension: Do nothing
     else if (txType === 'tExtension') {
     }
-    // t-Reduction: Do nothing
+    // t-Reduction
     else if (txType === 'tReduction') {
       const offset = txData
         .subarray(32)

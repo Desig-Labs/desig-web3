@@ -23,8 +23,7 @@ export const eddsa = {
  */
 export const ecdsa = {
   // Desig
-  // cluster: 'https://ecdsa.desig.dev',
-  cluster: 'http://localhost:10000',
+  cluster: 'https://ecdsa.desig.dev',
   // Ethereum
   chain: new Goerli(),
 }
