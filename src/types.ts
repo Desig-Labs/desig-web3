@@ -65,6 +65,7 @@ export type TransactionEntity = {
   msg: string
   raw: string
   ttl: number
+  approved: boolean
   createdAt: Date
   updatedAt: Date
 }
