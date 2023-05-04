@@ -19,7 +19,6 @@ export type MultisigEntity = {
   gid: string
   t: number
   n: number
-  name: string
   sqrpriv?: string
   signers: SignerEntity[]
   nonce: number

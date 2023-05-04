@@ -1,14 +1,7 @@
 import { decode, encode } from 'bs58'
 import { expect } from 'chai'
 import { Multisig } from '../dist'
-import {
-  eddsa,
-  ecdsa,
-  alicePrivkey,
-  bobPrivkey,
-  carolPrivkey,
-  rand,
-} from './config'
+import { eddsa, ecdsa, alicePrivkey, bobPrivkey, carolPrivkey } from './config'
 import { EdCurve } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 
@@ -22,13 +15,11 @@ describe('eddsa: multisig', () => {
   const multisig = new Multisig(eddsa.cluster, CryptoSys.EdDSA)
   const t = 2
   const n = 3
-  const name = `The Dao #${rand()}`
   let multisigId = ''
 
   it('initialize multisig', async () => {
-    const data = await multisig.initializeMultisig({ t, n, name, pubkeys })
+    const data = await multisig.initializeMultisig({ t, n, pubkeys })
     multisigId = data.id
-    expect(data.name).equals(name)
     expect(data.t).equals(t)
     expect(data.n).equals(n)
     expect(multisigId).to.not.empty
@@ -36,7 +27,6 @@ describe('eddsa: multisig', () => {
 
   it('fecth multsig', async () => {
     const data = await multisig.getMultisig(multisigId)
-    expect(data.name).equals(name)
     expect(data.t).equals(t)
     expect(data.n).equals(n)
   })
@@ -47,13 +37,11 @@ describe('ecdsa: multisig', () => {
   const rand = Math.round(Math.random() * 10 ** 9)
   const t = 2
   const n = 3
-  const name = `The Dao #${rand}`
   let multisigId = ''
 
   it('initialize multisig', async () => {
-    const data = await multisig.initializeMultisig({ t, n, name, pubkeys })
+    const data = await multisig.initializeMultisig({ t, n, pubkeys })
     multisigId = data.id
-    expect(data.name).equals(name)
     expect(data.t).equals(t)
     expect(data.n).equals(n)
     expect(multisigId).to.not.empty
@@ -61,7 +49,6 @@ describe('ecdsa: multisig', () => {
 
   it('fecth multsig', async () => {
     const data = await multisig.getMultisig(multisigId)
-    expect(data.name).equals(name)
     expect(data.t).equals(t)
     expect(data.n).equals(n)
   })

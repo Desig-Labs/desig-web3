@@ -23,19 +23,16 @@ export class Multisig extends Connection {
    * Initialize a new multig
    * @param opt.t The t-out-of-n threshold
    * @param opt.n The t-out-of-n threshold
-   * @param opt.name The multisig's name
    * @param opt.pubkeys The list of member pubkeys
    * @returns Multisig data
    */
   initializeMultisig = async ({
     t,
     n,
-    name = '',
     pubkeys,
   }: {
     t: number
     n: number
-    name?: string
     pubkeys: string[]
   }): Promise<MultisigEntity> => {
     if (t < 1 || n < 1 || t > n)
@@ -47,7 +44,6 @@ export class Multisig extends Connection {
     const { data } = await this.connection.post<MultisigEntity>('multisig', {
       t,
       n,
-      name,
       pubkeys,
     })
     return data

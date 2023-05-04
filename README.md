@@ -48,12 +48,10 @@ const dMultisig = new Multisig(
 )
 const t = 2
 const n = 2
-const name = 'My first DAO'
 const pubkeys = ['<alice_pubkey>', '<bob_pubkey>']
 const multisig = await dMultisig.initializeMultisig({
   t,
   n,
-  name,
   pubkeys,
 })
 ```
