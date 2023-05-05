@@ -46,6 +46,7 @@ export type ProposalEntity = {
   R: string
   sqrhz?: string
   ttl: number
+  creator: string
   createdAt: Date
   updatedAt: Date
 }
@@ -65,6 +66,7 @@ export type TransactionEntity = {
   msg: string
   raw: string
   ttl: number
+  creator: string
   approved: boolean
   createdAt: Date
   updatedAt: Date
