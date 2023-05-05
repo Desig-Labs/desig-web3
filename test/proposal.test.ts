@@ -10,9 +10,11 @@ import {
   carolPrivkey,
 } from './config'
 import { CryptoSys } from '@desig/supported-chains'
+import { randomBytes } from '@noble/hashes/utils'
+import { keccak_256 } from '@noble/hashes/sha3'
 
 describe('eddsa: proposal', () => {
-  const message = 'hello world'
+  const message = encode(randomBytes(1024))
   let alice: Proposal
   let bob: Proposal
   let carol: Proposal
@@ -44,14 +46,14 @@ describe('eddsa: proposal', () => {
 
   it('initialize proposal', async () => {
     const raw = new TextEncoder().encode(message)
-    const msg = new TextEncoder().encode(message)
+    const msg = keccak_256(raw)
     proposalId = Proposal.deriveProposalId(multisigId, msg)
     const proposal = await alice.initializeProposal({
       msg,
       raw,
       chainId: eddsa.chain.chainId,
     })
-    expect(new TextDecoder().decode(decode(proposal.msg))).equal(message)
+    expect(encode(msg)).equal(proposal.msg)
     expect(proposalId).equal(proposal.id)
     expect(proposal.chainId).equal(eddsa.chain.chainId)
   })
@@ -88,7 +90,7 @@ describe('eddsa: proposal', () => {
 })
 
 describe('ecdsa: proposal', () => {
-  const message = 'hello world'
+  const message = encode(randomBytes(1024))
   let alice: Proposal
   let bob: Proposal
   let carol: Proposal
@@ -120,14 +122,14 @@ describe('ecdsa: proposal', () => {
 
   it('initialize proposal', async () => {
     const raw = new TextEncoder().encode(message)
-    const msg = new TextEncoder().encode(message)
+    const msg = keccak_256(raw)
     proposalId = Proposal.deriveProposalId(multisigId, msg)
     const proposal = await alice.initializeProposal({
       msg,
       raw,
       chainId: ecdsa.chain.chainId,
     })
-    expect(new TextDecoder().decode(decode(proposal.msg))).equal(message)
+    expect(encode(msg)).equal(proposal.msg)
     expect(proposalId).equal(proposal.id)
     expect(proposal.chainId).equal(ecdsa.chain.chainId)
   })

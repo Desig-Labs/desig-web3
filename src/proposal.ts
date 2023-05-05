@@ -1,4 +1,4 @@
-import { ECTSS, EdCurve, EdTSS, SecretSharing } from '@desig/core'
+import { ECTSS, EdCurve, EdTSS, ElGamal, SecretSharing } from '@desig/core'
 import { CryptoSys } from '@desig/supported-chains'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { concatBytes } from '@noble/hashes/utils'
@@ -159,11 +159,13 @@ export class Proposal extends Connection {
     const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.index),
     )
+    const elgamal = new ElGamal()
+    const r = elgamal.decrypt(decode(randomness), this.privkey)
     const signature = EdTSS.sign(
       decode(msg),
       decode(R),
       this.keypair.masterkey,
-      decode(randomness).subarray(32),
+      r,
       this.keypair.share,
     )
     const Authorization = await this.getNonceAuthorization()
@@ -180,11 +182,9 @@ export class Proposal extends Connection {
     const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.index),
     )
-    const signature = ECTSS.sign(
-      decode(R),
-      decode(randomness).subarray(32),
-      this.keypair.share,
-    )
+    const elgamal = new ElGamal()
+    const r = elgamal.decrypt(decode(randomness), this.privkey)
+    const signature = ECTSS.sign(decode(R), r, this.keypair.share)
     const Authorization = await this.getNonceAuthorization()
     const { data } = await this.connection.patch<ProposalEntity>(
       `/proposal/${id}`,
@@ -203,18 +203,16 @@ export class Proposal extends Connection {
     id: string,
   ): Promise<{ sig: Uint8Array; recv?: number }> => {
     const { t } = this.keypair.getThreshold()
-    const tx = await this.getProposal(id)
-    const approvals = tx.approvals.filter(({ signature }) => !!signature)
-    if (approvals.length < t)
+    const { msg, R, sqrhz, approvals } = await this.getProposal(id)
+    const signatures = approvals.filter(({ signature }) => !!signature)
+    if (signatures.length < t)
       throw new Error(
-        `Insufficient number of signatures. Require ${t} but got ${approvals.length}.`,
+        `Insufficient number of signatures. Require ${t} but got ${signatures.length}.`,
       )
     if (this.keypair.cryptosys === CryptoSys.EdDSA)
-      return this.finalizeEdSignature(approvals)
-    if (this.keypair.cryptosys === CryptoSys.ECDSA) {
-      const { msg, R, sqrhz } = tx
-      return this.finalizeEcSignature(approvals, { msg, R, sqrhz })
-    }
+      return this.finalizeEdSignature(signatures)
+    if (this.keypair.cryptosys === CryptoSys.ECDSA)
+      return this.finalizeEcSignature(signatures, { msg, R, sqrhz })
     throw new Error('Invalid crypto system')
   }
   // Finalize Ed Signature

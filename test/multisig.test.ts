@@ -34,7 +34,6 @@ describe('eddsa: multisig', () => {
 
 describe('ecdsa: multisig', () => {
   const multisig = new Multisig(ecdsa.cluster, CryptoSys.ECDSA)
-  const rand = Math.round(Math.random() * 10 ** 9)
   const t = 2
   const n = 3
   let multisigId = ''
