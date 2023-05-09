@@ -67,7 +67,9 @@ export class Proposal extends Connection {
    */
   getProposal = async (proposalId: string) => {
     const { data } = await this.connection.get<
-      ProposalEntity & { approvals: ApprovalEntity[] }
+      ProposalEntity & {
+        approvals: Array<ApprovalEntity & { signer: SignerEntity }>
+      }
     >(`/proposal/${proposalId}`)
     return data
   }
@@ -191,7 +193,9 @@ export class Proposal extends Connection {
     throw new Error('Unsupported elliptic curve.')
   }
   // Finalize Ed25519 Signature
-  private finalizeEd25519Signature = async (approvals: ApprovalEntity[]) => {
+  private finalizeEd25519Signature = async (
+    approvals: Array<ApprovalEntity & { signer: SignerEntity }>,
+  ) => {
     const secretSharing = new SecretSharing(EdTSS.ff)
     const indice = approvals.map(({ signer: { id } }) => decode(id))
     const pi = secretSharing.pi(indice)
@@ -206,7 +210,7 @@ export class Proposal extends Connection {
   }
   // Finalize Secp256k1 Signature
   private finalizeSecp256k1Signature = async (
-    signatures: ApprovalEntity[],
+    approvals: Array<ApprovalEntity & { signer: SignerEntity }>,
     { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
   ) => {
     const secretSharing = new SecretSharing(ECTSS.ff)
@@ -214,9 +218,9 @@ export class Proposal extends Connection {
     const multisigId = encode(this.keypair.masterkey)
     const { sqrpriv } = await multisig.getMultisig(multisigId)
     if (!sqrpriv) throw new Error('Invalid transaction.')
-    const indice = signatures.map(({ signer: { id } }) => decode(id))
+    const indice = approvals.map(({ signer: { id } }) => decode(id))
     const pi = secretSharing.pi(indice)
-    const sigs = signatures.map(({ signature }, i) =>
+    const sigs = approvals.map(({ signature }, i) =>
       secretSharing.yl(decode(signature), pi[i]),
     )
     const [sig, recv] = ECTSS.addSig(

@@ -44,7 +44,6 @@ export type ApprovalEntity = {
   id: string
   signature: string
   randomness: string
-  signer: SignerEntity
   createdAt: Date
   updatedAt: Date
 }
@@ -52,15 +51,13 @@ export type ApprovalEntity = {
 export type SignatureEntity = {
   id: number
   signature: string
-  signer: Omit<SignerEntity, 'multisig'>
+  pullrequest: string
   createdAt: Date
   updatedAt: Date
 }
 
 export type TransactionEntity = {
   id: string
-  multisig: Pick<MultisigEntity, 'id'>
-  signatures: SignatureEntity[]
   msg: string
   raw: string
   ttl: number
@@ -80,11 +77,12 @@ export type SignatureEventResponse = SignatureEntity & {
   transaction: Omit<TransactionEntity, 'signatures'>
 }
 
-export type TransactionType =
-  | 'tExtension'
-  | 'tReduction'
-  | 'nExtension'
-  | 'nReduction'
+export enum TransactionType {
+  tExtension = 'tExtension',
+  tReduction = 'tReduction',
+  nExtension = 'nExtension',
+  nReduction = 'nReduction',
+}
 export type TransactionParams = {
   index?: string
   pubkey?: string

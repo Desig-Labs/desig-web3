@@ -27,7 +27,7 @@
     "predeploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts",
     "deploy": "echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
     "pretest": "yarn build",
-    "test": "mocha --exit --require ts-node/register -t 120000 test/**/proposal.*.test.ts",
+    "test": "mocha --exit --require ts-node/register -t 120000 test/**/transaction.ed25519.test.ts",
     "test:watch": "nodemon --ext ts --watch src --watch test --exec \"yarn test\"",
     "clean": "rimraf dist"
   },

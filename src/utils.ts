@@ -1,6 +1,7 @@
 import { ECCurve, EdCurve } from '@desig/core'
 import { Curve } from '@desig/supported-chains'
 import { Point } from '@noble/ed25519'
+import { bytesToHex } from '@noble/hashes/utils'
 import BN, { Endianness } from 'bn.js'
 import { decode, encode } from 'bs58'
 
@@ -48,3 +49,12 @@ export const isAddress = (pubkey: string) => {
     return false
   }
 }
+
+/**
+ * Compare two Uint8Array
+ * @param a Uint8Array
+ * @param b Uint8Array
+ * @returns boolean
+ */
+export const compare = (a: Uint8Array, b: Uint8Array) =>
+  bytesToHex(a) === bytesToHex(b)
