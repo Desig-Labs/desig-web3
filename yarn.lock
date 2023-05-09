@@ -21,20 +21,20 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@desig/core@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.2.2.tgz#e61a862c819558893d0f8f13d1b3f34d9fd26c04"
-  integrity sha512-jq3LfJox5L7g/8ue6etR0pByau2fo0CHyq4BEUualJngQn12TsYDtAX4kxxTcusLOT9BdiVYN5aJd4wpHPkvGQ==
+"@desig/core@^0.2.5":
+  version "0.2.5"
+  resolved "https://registry.yarnpkg.com/@desig/core/-/core-0.2.5.tgz#f3e0271cbc97118b27036a156b419ec1866e9601"
+  integrity sha512-xvVlJbaprum9fH4AuvoZ7DqN0CE7QuWy4toXvHwheoHpqMO1kTaKFKrP14JLTCxSaDb3cwej9aFCqUx736NUeA==
   dependencies:
     "@noble/ed25519" "^1.7.1"
     "@noble/hashes" "^1.1.5"
     "@noble/secp256k1" "^1.7.0"
     bn.js "^5.2.1"
 
-"@desig/supported-chains@^0.1.4":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@desig/supported-chains/-/supported-chains-0.1.4.tgz#bb35b16b7725f24345f3b21531e36f349213293c"
-  integrity sha512-TK9OsG/aDK3gwV3Z0/FHllBvPr3z88npiBnOfYhKr3hZoJzwVhynkKrmxAz7MPMRWTIeAS0Z9xDQcdjUHcHOGg==
+"@desig/supported-chains@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@desig/supported-chains/-/supported-chains-1.0.2.tgz#c6f005308f896a4af1d323c3cadb85c6210b86a0"
+  integrity sha512-F0MkBBlBwtv2bkpHtiGbR+xAyAeztbfQfn2OZZ69PofFnkmK407/5mirT+Bh28pmDD2CE7NV9fRVstm84MsOVw==
   dependencies:
     "@noble/hashes" "^1.2.0"
     "@noble/secp256k1" "^1.7.1"
@@ -1674,3 +1674,8 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
+
+zod@^3.21.4:
+  version "3.21.4"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.21.4.tgz#10882231d992519f0a10b5dd58a38c9dabbb64db"
+  integrity sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==

@@ -1,42 +1,25 @@
-import {
-  ECCurve,
-  EdCurve,
-  ElGamal,
-  ExtendedElGamal,
-  SecretSharing,
-} from '@desig/core'
-import { CryptoSys, toScheme } from '@desig/supported-chains'
+import { ElGamal, ExtendedElGamal, SecretSharing } from '@desig/core'
 import { decode, encode } from 'bs58'
 import { Connection } from './connection'
-import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
 import type { MultisigEntity, SignerEntity, TransactionEntity } from './types'
 import { concatBytes } from '@noble/hashes/utils'
+import { DesigKeypair } from './keypair'
+import { ec } from './utils'
 
 export class Signer extends Connection {
-  public sss: SecretSharing
-
-  constructor(cluster: string, cryptosys: CryptoSys, privkey: Uint8Array) {
-    super(cluster, cryptosys, { privkey })
-    let curve: typeof EdCurve | typeof ECCurve
-    if (this.cryptosys === CryptoSys.EdDSA) curve = EdCurve
-    else if (this.cryptosys === CryptoSys.ECDSA) curve = ECCurve
-    else throw new Error('Invalid crypto system')
-    this.sss = new SecretSharing(curve.ff)
+  constructor(cluster: string, privkey: string) {
+    super(cluster, decode(privkey))
   }
 
   /**
    * Get all signers data
    * @returns Signer data
    */
-  getAllSigners = async (
-    filter: Partial<{ multisigId: string }> = {},
-  ): Promise<SignerEntity[]> => {
-    const Authorization = await this.getTimestampAuthorization()
-    const { data } = await this.connection.get<SignerEntity[]>(`/signer`, {
-      params: filter,
-      headers: {
-        Authorization,
-      },
+  getAllSigners = async (filter: Partial<{ multisigId: string }> = {}) => {
+    const { data } = await this.connection.get<
+      Array<SignerEntity & { multisig: MultisigEntity }>
+    >('/signer', {
+      params: { owner: this.owner },
     })
     return data
   }
@@ -46,40 +29,28 @@ export class Signer extends Connection {
    * @param signer Signer id
    * @returns Signer data
    */
-  getSigner = async (
-    signerId: string,
-  ): Promise<SignerEntity & { multisig: MultisigEntity }> => {
-    const Authorization = await this.getTimestampAuthorization()
+  getSigner = async (signerId: string) => {
     const { data } = await this.connection.get<
       SignerEntity & { multisig: MultisigEntity }
-    >(`/signer/${signerId}`, {
-      headers: {
-        Authorization,
-      },
-    })
+    >(`/signer/${signerId}`)
     return data
   }
 
   /**
    * Activate the signer
-   * @param signer Signer id
+   * @param signerId Signer id
    * @returns Signer data
    */
-  activateSigner = async (
-    signerId: string,
-  ): Promise<SignerEntity & { multisig: MultisigEntity }> => {
-    let { encryptedShare, genesis } = await this.getSigner(signerId)
+  activateSigner = async (signerId: string) => {
+    let {
+      encryptedShare,
+      genesis,
+      multisig: { curve },
+    } = await this.getSigner(signerId)
     if (!encryptedShare) {
       const extendedElgamal = new ExtendedElGamal()
       const elgamal = new ElGamal()
-      // Get boarding transaction
-      const nonce = await this.getNonce(signerId)
-      const sig = this.sign(
-        new TextEncoder().encode(String(nonce)),
-        decode(signerId),
-      )
-      const credential = `${signerId}/${encode(sig)}`
-      const Authorization = `Bearer ${credential}`
+      const sss = new SecretSharing(ec[curve].ff)
       const {
         data: {
           raw,
@@ -88,18 +59,17 @@ export class Signer extends Connection {
         },
       } = await this.connection.get<TransactionEntity>(
         `/transaction/${genesis}`,
-        { headers: { Authorization } },
       )
       // Compute the share
       const txData = decode(raw)
       const k = txData.subarray(txData.length - 136).subarray(0, 8)
       const gid = txData.subarray(8, 16)
       const t = txData.subarray(16, 24)
-      const n = this.sss.ff.decode(
-        this.sss.ff.encode(txData.subarray(24, 32)).redSub(this.sss.ff.ONE),
+      const n = sss.ff.decode(
+        sss.ff.encode(txData.subarray(24, 32)).redSub(sss.ff.ONE),
         8,
       )
-      const z = this.sss.interpolate(
+      const z = sss.interpolate(
         k,
         signatures
           .filter(({ signature }) => !!signature)
@@ -120,11 +90,9 @@ export class Signer extends Connection {
           .subarray(0, 64),
         this.privkey,
       )
-      const s = this.sss.ff.sub(z, r)
+      const s = sss.ff.sub(z, r)
       const share = concatBytes(k, t, n, gid, s)
-      const secret = `${toScheme(this.cryptosys)}/${multisigId}/${encode(
-        share,
-      )}`
+      const secret = `${curve}/${multisigId}/${encode(share)}`
       // Encrypt the share
       encryptedShare = encode(
         extendedElgamal.encrypt(
@@ -134,18 +102,15 @@ export class Signer extends Connection {
       )
     }
     // Activate the signer
-    const Authorization = await this.getTimestampAuthorization()
+    const payload = { activated: true, encryptedShare }
+    const Authorization = await this.getAuthorization(payload)
     const { data } = await this.connection.patch<
       SignerEntity & { multisig: MultisigEntity }
-    >(
-      `/signer/${signerId}`,
-      { activated: true, encryptedShare },
-      {
-        headers: {
-          Authorization,
-        },
+    >(`/signer/${signerId}`, payload, {
+      headers: {
+        Authorization,
       },
-    )
+    })
     return data
   }
 
@@ -153,9 +118,7 @@ export class Signer extends Connection {
     const { encryptedShare } = await this.getSigner(signerId)
     const elgamal = new ExtendedElGamal()
     const buf = elgamal.decrypt(decode(encryptedShare), this.privkey)
-    const share = new TextDecoder().decode(buf)
-    if (share.startsWith('ecdsa')) return new DesigECDSAKeypair(share)
-    if (share.startsWith('eddsa')) return new DesigEdDSAKeypair(share)
-    throw new Error('Invalid crypto scheme')
+    const secretKey = new TextDecoder().decode(buf)
+    return new DesigKeypair(secretKey)
   }
 }

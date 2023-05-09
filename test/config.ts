@@ -8,24 +8,11 @@ export const bobPrivkey = '4d24Hnff6irybALSpHXCsChsjfVUmbQEPxZkKCAhGXLB'
 export const carolPrivkey = 'Bro7rv256G25xvsuY4dbRN2PiQtwR97RpeKAwXJTKfq'
 export const eddyPrivkey = 'HcACvzN7TZW7qCzMpFW6udQug8iPvWBVwtB472xVm1yK'
 
-/**
- * EdDSA utils
- */
-export const eddsa = {
-  // Desig
-  cluster: 'https://eddsa.desig.dev',
-  // Solana
-  chain: new SolanaDevnet(),
-}
-
-/**
- * ECDSA utils
- */
-export const ecdsa = {
-  // Desig
-  cluster: 'https://ecdsa.desig.dev',
-  // Ethereum
-  chain: new Goerli(),
+// Cluster
+export const cluster = 'http://127.0.0.1:8787'
+export const chain = {
+  ed25519: new SolanaDevnet(),
+  secp256k1: new Goerli(),
 }
 
 /**

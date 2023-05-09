@@ -6,9 +6,9 @@ import {
   SecretSharing,
 } from '@desig/core'
 import { io, Socket } from 'socket.io-client'
-import { Connection } from './connection'
+import { Connection } from '../src/connection'
 import { CryptoSys } from '@desig/supported-chains'
-import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
+import { DesigECDSAKeypair, DesigEdDSAKeypair } from '../src/keypair'
 import { concatBytes } from '@noble/hashes/utils'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { decode, encode } from 'bs58'
@@ -20,8 +20,8 @@ import {
   TransactionEntity,
   TransactionParams,
   TransactionType,
-} from './types'
-import { SignatureEventResponse } from './types'
+} from '../src/types'
+import { SignatureEventResponse } from '../src/types'
 
 export const SIGNATURE_EVENTS: SignatureEvents[] = [
   'insertSignature',

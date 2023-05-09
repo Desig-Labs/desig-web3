@@ -1,50 +1,70 @@
-import { CryptoSys } from '@desig/supported-chains'
+import { z } from 'zod'
 import { Connection } from './connection'
-import type { MultisigEntity } from './types'
+import type { MultisigEntity, SignerEntity } from './types'
+import { decode } from 'bs58'
+import { isAddress } from './utils'
+import { Curve } from '@desig/supported-chains'
 
 export class Multisig extends Connection {
-  constructor(cluster: string, cryptosys: CryptoSys) {
-    super(cluster, cryptosys)
+  constructor(cluster: string, privkey: string) {
+    super(cluster, decode(privkey))
   }
 
   /**
    * Fetch multisig data including signer data
-   * @param id Multisig id
+   * @param multisigId Multisig id
    * @returns Multisig data
    */
-  getMultisig = async (id: string): Promise<MultisigEntity> => {
-    const { data } = await this.connection.get<MultisigEntity>(
-      `/multisig/${id}`,
-    )
+  getMultisig = async (multisigId: string) => {
+    const { data } = await this.connection.get<
+      MultisigEntity & { signers: Array<Omit<SignerEntity, 'encryptedShare'>> }
+    >(`/multisig/${multisigId}`)
     return data
   }
 
   /**
    * Initialize a new multig
-   * @param opt.t The t-out-of-n threshold
-   * @param opt.n The t-out-of-n threshold
-   * @param opt.pubkeys The list of member pubkeys
+   * @param curve Elliptic curve
+   * @param payload.t The t-out-of-n threshold
+   * @param payload.n The t-out-of-n threshold
+   * @param payload.pubkeys The list of member pubkeys
    * @returns Multisig data
    */
-  initializeMultisig = async ({
-    t,
-    n,
-    pubkeys,
-  }: {
-    t: number
-    n: number
-    pubkeys: string[]
-  }): Promise<MultisigEntity> => {
-    if (t < 1 || n < 1 || t > n)
-      throw new Error(`Invalid threshold. Current (t,n)=(${t},${n}).`)
-    if (pubkeys.length !== n)
-      throw new Error(
-        `Insufficient number of pubkeys. Should be equal to ${n}.`,
-      )
-    const { data } = await this.connection.post<MultisigEntity>('multisig', {
-      t,
-      n,
-      pubkeys,
+  initializeMultisig = async (
+    curve: Curve,
+    payload: {
+      t: number
+      n: number
+      pubkeys: string[]
+    },
+  ) => {
+    // Validation
+    z.nativeEnum(Curve).parse(curve)
+    z.object({
+      t: z.number().int().gte(1).lte(101),
+      n: z.number().int().gte(1).lte(101),
+      pubkeys: z
+        .array(
+          z.string().refine(
+            (pubkey) => isAddress(pubkey),
+            (pubkey) => ({ message: `Invalid pubkey format: ${pubkey}.` }),
+          ),
+        )
+        .nonempty(),
+    })
+      .refine(({ t, n }) => t <= n, {
+        message: 'The threshold t must be less than or equal to n.',
+      })
+      .refine(({ n, pubkeys }) => n === pubkeys.length, {
+        message: 'Insufficient number of member pubkeys.',
+      })
+      .parse(payload)
+    // Request
+    const Authorization = await this.getAuthorization(payload)
+    const { data } = await this.connection.post<
+      Awaited<ReturnType<typeof this.getMultisig>>
+    >('/multisig', payload, {
+      headers: { Authorization, 'X-Desig-Curve': curve },
     })
     return data
   }

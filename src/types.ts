@@ -1,3 +1,5 @@
+import { Curve } from '@desig/supported-chains'
+
 export type PaginationParams = {
   offset: number
   limit: number
@@ -6,11 +8,9 @@ export type PaginationParams = {
 export type SignerEntity = {
   id: string
   activated: boolean
-  archieved: boolean
   genesis: string
   owner: string
   encryptedShare: string
-  multisig: MultisigEntity
   createdAt: Date
   updatedAt: Date
 }
@@ -20,33 +20,31 @@ export type MultisigEntity = {
   gid: string
   t: number
   n: number
+  curve: Curve
+  creator: string
   sqrpriv?: string
-  signers: SignerEntity[]
-  nonce: number
-  createdAt: Date
-  updatedAt: Date
-}
-
-export type ApprovalEntity = {
-  id: number
-  signature: string
-  randomness: string
-  signer: Omit<SignerEntity, 'multisig'>
   createdAt: Date
   updatedAt: Date
 }
 
 export type ProposalEntity = {
   id: string
-  multisig: Pick<MultisigEntity, 'id'>
   chainId: string
-  approvals: ApprovalEntity[]
   msg: string
   raw: string
   R: string
   sqrhz?: string
   ttl: number
   creator: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type ApprovalEntity = {
+  id: string
+  signature: string
+  randomness: string
+  signer: SignerEntity
   createdAt: Date
   updatedAt: Date
 }

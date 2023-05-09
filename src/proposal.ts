@@ -1,42 +1,28 @@
 import { ECTSS, EdCurve, EdTSS, ElGamal, SecretSharing } from '@desig/core'
-import { CryptoSys } from '@desig/supported-chains'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { concatBytes } from '@noble/hashes/utils'
 import { decode, encode } from 'bs58'
-import { io, Socket } from 'socket.io-client'
 import { Connection } from './connection'
-import { DesigECDSAKeypair, DesigEdDSAKeypair } from './keypair'
+import { DesigKeypair } from './keypair'
 import { Multisig } from './multisig'
 import type {
   ApprovalEntity,
-  ApprovalEventResponse,
-  ApprovalEvents,
   PaginationParams,
   ProposalEntity,
+  SignerEntity,
 } from './types'
-
-export const APPROVAL_EVENTS: ApprovalEvents[] = [
-  'insertApproval',
-  'updateApproval',
-]
+import { Curve } from '@desig/supported-chains'
 
 export class Proposal extends Connection {
-  private socket: Socket
-
-  constructor(
-    cluster: string,
-    cryptosys: CryptoSys,
-    privkey: Uint8Array,
-    keypair: DesigEdDSAKeypair | DesigECDSAKeypair,
-  ) {
-    super(cluster, cryptosys, { privkey, keypair })
+  constructor(cluster: string, privkey: string, keypair: DesigKeypair) {
+    super(cluster, decode(privkey), keypair)
   }
 
   /**
-   * Derive the proposal id by its content
+   * Derive the proposal id by the multisig id and its content
    * @param multisigId Multisig id
    * @param msg Proposal's content (Or message)
-   * @returns The proposal id
+   * @returns Proposal id
    */
   static deriveProposalId = (multisigId: string, msg: Uint8Array): string => {
     const seed = concatBytes(decode(multisigId), msg)
@@ -44,40 +30,14 @@ export class Proposal extends Connection {
   }
 
   /**
-   * Initialize a socket
+   * Derive the approval id by the multisig id and the signer id
+   * @param proposalId Proposal id
+   * @param signerId Signer id
+   * @returns Approval id
    */
-  private initSocket = () => {
-    if (this.keypair) {
-      if (!this.socket)
-        this.socket = io(this.cluster, {
-          auth: async (cb) => {
-            const Authorization = await this.getNonceAuthorization()
-            return cb({ Authorization })
-          },
-        })
-      this.socket.emit('proposal')
-    } else this.socket = undefined
-    return this.socket
-  }
-
-  /**
-   * Watch approval changes
-   * @param callback Callback event
-   */
-  watch = (
-    callback: (event: ApprovalEvents, data: ApprovalEventResponse) => void,
-  ) => {
-    const socket = this.initSocket()
-    APPROVAL_EVENTS.forEach((event) =>
-      socket.on(event, (res: ApprovalEventResponse) => callback(event, res)),
-    )
-  }
-
-  /**
-   * Unwatch approval changes
-   */
-  unwatch = () => {
-    this.socket.disconnect()
+  static deriveApprovalId(proposalId: string, signerId: string) {
+    const seed = concatBytes(decode(proposalId), decode(signerId))
+    return encode(keccak_256(seed))
   }
 
   /**
@@ -89,26 +49,38 @@ export class Proposal extends Connection {
   getProposals = async ({
     offset = 0,
     limit = 500,
-  }: Partial<PaginationParams>): Promise<ProposalEntity[]> => {
-    const Authorization = await this.getNonceAuthorization()
+  }: Partial<PaginationParams> = {}) => {
     const { data } = await this.connection.get<ProposalEntity[]>('/proposal', {
-      params: { limit, offset },
-      headers: { Authorization },
+      params: {
+        multisigId: encode(this.keypair.masterkey),
+        limit,
+        offset,
+      },
     })
     return data
   }
 
   /**
    * Get a prposal data. Note that it's only about multisig info.
-   * @param id Proposal id
+   * @param proposalId Proposal id
    * @returns Proposal data
    */
-  getProposal = async (id: string): Promise<ProposalEntity> => {
-    const Authorization = await this.getNonceAuthorization()
-    const { data } = await this.connection.get<ProposalEntity>(
-      `/proposal/${id}`,
-      { headers: { Authorization } },
-    )
+  getProposal = async (proposalId: string) => {
+    const { data } = await this.connection.get<
+      ProposalEntity & { approvals: ApprovalEntity[] }
+    >(`/proposal/${proposalId}`)
+    return data
+  }
+
+  /**
+   * Get an approval data.
+   * @param approvalId Approval id
+   * @returns Approval data
+   */
+  getApproval = async (approvalId: string) => {
+    const { data } = await this.connection.get<
+      ApprovalEntity & { proposal: ProposalEntity; signer: SignerEntity }
+    >(`/approval/${approvalId}`)
     return data
   }
 
@@ -127,35 +99,50 @@ export class Proposal extends Connection {
     msg: Uint8Array
     chainId: string
   }): Promise<ProposalEntity> => {
-    const Authorization = await this.getNonceAuthorization()
-    const { data } = await this.connection.post<ProposalEntity>(
-      '/proposal',
-      {
-        msg: encode(msg),
-        raw: encode(raw),
-        chainId,
-      },
-      { headers: { Authorization } },
-    )
+    const payload = {
+      multisigId: encode(this.keypair.masterkey),
+      msg: encode(msg),
+      raw: encode(raw),
+      chainId,
+    }
+    const Authorization = await this.getAuthorization(payload)
+    const { data } = await this.connection.post<
+      Awaited<ReturnType<typeof this.getProposal>>
+    >('/proposal', payload, {
+      headers: { Authorization, 'X-Desig-Curve': this.keypair.curve },
+    })
     return data
   }
 
   /**
    * Approve a proposal.
    * You will need to submit the commitment in the 1st round to be able to join the 2nd round of signing.
-   * @param id Proposal id
+   * @param proposalId Proposal id
    * @returns Proposal data
    */
-  approveProposal = async (id: string): Promise<ProposalEntity> => {
-    if (this.keypair.cryptosys === CryptoSys.EdDSA)
-      return this.approveEdTransaction(id)
-    if (this.keypair.cryptosys === CryptoSys.ECDSA)
-      return this.approveEcTransaction(id)
-    throw new Error('Invalid crypto system')
+  approveProposal = async (proposalId: string) => {
+    const signature = await (() => {
+      switch (this.keypair.curve) {
+        case Curve.ed25519:
+          return this.approveEd25519Proposal(proposalId)
+        case Curve.secp256k1:
+          return this.approveSecp256k1Proposal(proposalId)
+        default:
+          throw new Error('Unsupported elliptic curve.')
+      }
+    })()
+    const approvalId = Proposal.deriveApprovalId(proposalId, this.index)
+    const payload = { signature }
+    const Authorization = await this.getAuthorization(payload)
+    const { data } = await this.connection.patch<
+      Awaited<ReturnType<typeof this.getApproval>>
+    >(`/approval/${approvalId}`, payload, { headers: { Authorization } })
+    return data
   }
-  // Approve Ed Transaction
-  private approveEdTransaction = async (id: string) => {
-    const { msg, approvals, R } = await this.getProposal(id)
+  // Approve Ed25519 Proposal
+  private approveEd25519Proposal = async (proposalId: string) => {
+    const data = await this.getProposal(proposalId)
+    const { msg, approvals, R } = data
     const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.index),
     )
@@ -168,30 +155,18 @@ export class Proposal extends Connection {
       r,
       this.keypair.share,
     )
-    const Authorization = await this.getNonceAuthorization()
-    const { data } = await this.connection.patch<ProposalEntity>(
-      `/proposal/${id}`,
-      { signature: encode(signature) },
-      { headers: { Authorization } },
-    )
-    return data
+    return encode(signature)
   }
-  // Approve EC Transaction
-  private approveEcTransaction = async (id: string) => {
-    const { approvals, R } = await this.getProposal(id)
+  // Approve Secp256k1 Proposal
+  private approveSecp256k1Proposal = async (proposalId: string) => {
+    const { approvals, R } = await this.getProposal(proposalId)
     const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.index),
     )
     const elgamal = new ElGamal()
     const r = elgamal.decrypt(decode(randomness), this.privkey)
     const signature = ECTSS.sign(decode(R), r, this.keypair.share)
-    const Authorization = await this.getNonceAuthorization()
-    const { data } = await this.connection.patch<ProposalEntity>(
-      `/proposal/${id}`,
-      { signature: encode(signature) },
-      { headers: { Authorization } },
-    )
-    return data
+    return encode(signature)
   }
 
   /**
@@ -209,14 +184,14 @@ export class Proposal extends Connection {
       throw new Error(
         `Insufficient number of signatures. Require ${t} but got ${signatures.length}.`,
       )
-    if (this.keypair.cryptosys === CryptoSys.EdDSA)
-      return this.finalizeEdSignature(signatures)
-    if (this.keypair.cryptosys === CryptoSys.ECDSA)
-      return this.finalizeEcSignature(signatures, { msg, R, sqrhz })
-    throw new Error('Invalid crypto system')
+    if (this.keypair.curve === Curve.ed25519)
+      return this.finalizeEd25519Signature(signatures)
+    if (this.keypair.curve === Curve.secp256k1)
+      return this.finalizeSecp256k1Signature(signatures, { msg, R, sqrhz })
+    throw new Error('Unsupported elliptic curve.')
   }
-  // Finalize Ed Signature
-  private finalizeEdSignature = async (approvals: ApprovalEntity[]) => {
+  // Finalize Ed25519 Signature
+  private finalizeEd25519Signature = async (approvals: ApprovalEntity[]) => {
     const secretSharing = new SecretSharing(EdTSS.ff)
     const indice = approvals.map(({ signer: { id } }) => decode(id))
     const pi = secretSharing.pi(indice)
@@ -229,16 +204,16 @@ export class Proposal extends Connection {
     const sig = EdTSS.addSig(sigs)
     return { sig }
   }
-  // Finalize EC Signature
-  private finalizeEcSignature = async (
+  // Finalize Secp256k1 Signature
+  private finalizeSecp256k1Signature = async (
     signatures: ApprovalEntity[],
     { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
   ) => {
     const secretSharing = new SecretSharing(ECTSS.ff)
-    const multisig = new Multisig(this.cluster, this.cryptosys)
+    const multisig = new Multisig(this.cluster, encode(this.privkey))
     const multisigId = encode(this.keypair.masterkey)
     const { sqrpriv } = await multisig.getMultisig(multisigId)
-    if (!sqrpriv) throw new Error('Invalid transaction')
+    if (!sqrpriv) throw new Error('Invalid transaction.')
     const indice = signatures.map(({ signer: { id } }) => decode(id))
     const pi = secretSharing.pi(indice)
     const sigs = signatures.map(({ signature }, i) =>
@@ -262,9 +237,9 @@ export class Proposal extends Connection {
    */
   verifySignature = async (id: string, signature: Uint8Array) => {
     const { msg } = await this.getProposal(id)
-    if (this.keypair.cryptosys === CryptoSys.EdDSA)
+    if (this.keypair.curve === Curve.ed25519)
       return EdTSS.verify(decode(msg), signature, this.keypair.masterkey)
-    if (this.keypair.cryptosys === CryptoSys.ECDSA)
+    if (this.keypair.curve === Curve.secp256k1)
       return ECTSS.verify(decode(msg), signature, this.keypair.masterkey)
     throw new Error('Invalid crypto system')
   }
