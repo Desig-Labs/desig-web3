@@ -48,14 +48,6 @@ export type ApprovalEntity = {
   updatedAt: Date
 }
 
-export type SignatureEntity = {
-  id: number
-  signature: string
-  pullrequest: string
-  createdAt: Date
-  updatedAt: Date
-}
-
 export type TransactionEntity = {
   id: string
   msg: string
@@ -63,6 +55,16 @@ export type TransactionEntity = {
   ttl: number
   creator: string
   approved: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type SignatureEntity = {
+  id: number
+  index: string
+  owner: string
+  signature: string
+  pullrequest: string
   createdAt: Date
   updatedAt: Date
 }

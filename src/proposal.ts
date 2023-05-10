@@ -30,7 +30,7 @@ export class Proposal extends Connection {
   }
 
   /**
-   * Derive the approval id by the multisig id and the signer id
+   * Derive the approval id by the proposal id and the signer id
    * @param proposalId Proposal id
    * @param signerId Signer id
    * @returns Approval id

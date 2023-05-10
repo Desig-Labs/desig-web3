@@ -26,7 +26,7 @@ describe('secp256k1: proposal', () => {
     const signers = await signer.getAllSigners()
     const { id: signerId } =
       signers.find(({ multisig: { curve } }) => curve === Curve.secp256k1) || {}
-    if (!signerId) throw new Error('Not available signer')
+    if (!signerId) throw new Error('Unavailable signer.')
     const keypair = await signer.getSignerKeypair(signerId)
     return new Proposal(cluster, privkey, keypair)
   }

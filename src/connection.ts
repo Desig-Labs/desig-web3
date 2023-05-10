@@ -32,11 +32,11 @@ export class Connection {
   /**
    * Sign the index-appended message
    * (The signed message always is appended  by his/her index to prevent unintended transactions)
-   * @param message The signed message
    * @param signerId The signer id
+   * @param message The signed message
    * @returns Signature
    */
-  protected sign = (message: Uint8Array, signerId: Uint8Array) => {
+  protected sign = (signerId: Uint8Array, message: Uint8Array) => {
     const msg = concatBytes(signerId, message)
     const sig = sync.sign(msg, this.privkey)
     return sig

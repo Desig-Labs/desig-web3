@@ -39,8 +39,11 @@ export class DesigKeypair implements MultisigWalletAdapter {
   public n: Uint8Array
 
   constructor(secretKey: string) {
+    if (!secretKey) throw new Error('Invalid secret key.')
     const [curve, masterkey, shareString] = secretKey.split('/')
-    this.curve = z.nativeEnum(Curve).parse(curve) && (curve as Curve)
+    const result = z.nativeEnum(Curve).safeParse(curve)
+    if (!result.success) throw new Error('Unsupported elliptic curve.')
+    this.curve = result.data
     this.ec = ec[this.curve]
     this.masterkey = decode(masterkey)
     this._parseShareString(shareString)

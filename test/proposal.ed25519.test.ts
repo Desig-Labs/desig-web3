@@ -26,7 +26,7 @@ describe('ed25519: proposal', () => {
     const signers = await signer.getAllSigners()
     const { id: signerId } =
       signers.find(({ multisig: { curve } }) => curve === Curve.ed25519) || {}
-    if (!signerId) throw new Error('Not available signer')
+    if (!signerId) throw new Error('Unavailable signer.')
     const keypair = await signer.getSignerKeypair(signerId)
     return new Proposal(cluster, privkey, keypair)
   }

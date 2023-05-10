@@ -27,7 +27,7 @@
     "predeploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts",
     "deploy": "echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
     "pretest": "yarn build",
-    "test": "mocha --exit --require ts-node/register -t 120000 test/**/transaction.ed25519.test.ts",
+    "test": "mocha --exit --require ts-node/register -t 120000 test/**/multisig.*.test.ts test/**/proposal.*.test.ts",
     "test:watch": "nodemon --ext ts --watch src --watch test --exec \"yarn test\"",
     "clean": "rimraf dist"
   },
@@ -35,7 +35,7 @@
     "node": ">=16 <=18"
   },
   "dependencies": {
-    "@desig/core": "^0.2.5",
+    "@desig/core": "^0.2.6",
     "@desig/supported-chains": "^1.0.2",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",

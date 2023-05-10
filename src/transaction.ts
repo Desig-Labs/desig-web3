@@ -7,7 +7,7 @@ import {
 } from '@desig/core'
 import { Connection } from './connection'
 import { DesigKeypair } from './keypair'
-import { bytesToHex, concatBytes } from '@noble/hashes/utils'
+import { concatBytes } from '@noble/hashes/utils'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { decode, encode } from 'bs58'
 import {
@@ -67,6 +67,17 @@ export class Transaction extends Connection {
     encode(decode(msg).subarray(0, 8))
 
   /**
+   * Derive the siganture id by the transaction id and the signer id
+   * @param transactionId Transaction id
+   * @param signerId Signer id
+   * @returns Signature id
+   */
+  static deriveSignatureId(transactionId: string, signerId: string) {
+    const seed = concatBytes(decode(transactionId), decode(signerId))
+    return encode(keccak_256(seed))
+  }
+
+  /**
    * Get transactions data.
    * @param filter.approved Approved
    * @param pagination.limit Limit
@@ -77,7 +88,14 @@ export class Transaction extends Connection {
     { approved }: Partial<{ approved: boolean }> = {},
     { offset = 0, limit = 500 }: Partial<PaginationParams> = {},
   ) => {
-    const params: PaginationParams & any = { limit, offset }
+    const params: PaginationParams & {
+      multisigId: string
+      approved?: boolean
+    } = {
+      multisigId: encode(this.keypair.masterkey),
+      limit,
+      offset,
+    }
     if (typeof approved === 'boolean') params.approved = approved
     const { data } = await this.connection.get<TransactionEntity[]>(
       '/transaction',
@@ -96,7 +114,8 @@ export class Transaction extends Connection {
   getTransaction = async (transactionId: string) => {
     const { data } = await this.connection.get<
       TransactionEntity & {
-        signatures: Array<SignatureEntity & { signer: SignerEntity }>
+        multisig: MultisigEntity
+        signatures: SignatureEntity[]
       }
     >(`/transaction/${transactionId}`)
     return data
@@ -109,7 +128,7 @@ export class Transaction extends Connection {
    */
   getSignature = async (signatureId: string) => {
     const { data } = await this.connection.get<
-      SignatureEntity & { transaction: TransactionEntity; signer: SignerEntity }
+      SignatureEntity & { transaction: TransactionEntity }
     >(`/signature/${signatureId}`)
     return data
   }
@@ -128,7 +147,7 @@ export class Transaction extends Connection {
     params: TransactionParams
   }) => {
     const payload = {
-      multisig: encode(this.keypair.masterkey),
+      multisigId: encode(this.keypair.masterkey),
       type,
       params,
     }
@@ -150,11 +169,9 @@ export class Transaction extends Connection {
     const selector = new Selector()
     const elgamal = new ElGamal()
     const { msg, raw, signatures } = await this.getTransaction(transactionId)
-    const { pullrequest } = signatures.find(
-      ({ signer: { id } }) => id === this.index,
-    )
+    const { pullrequest } = signatures.find(({ index }) => index === this.index)
     // Auth signature
-    let sig = this.sign(decode(msg), decode(this.index))
+    let sig = this.sign(decode(this.index), decode(msg))
     // Handle transaction
     const tx = decode(raw)
     const txType = selector.getType(tx.subarray(0, 8))
@@ -185,11 +202,12 @@ export class Transaction extends Connection {
     // Invalid transaction type
     else throw new Error('Invalid transaction type')
     // Submit result
+    const signatureId = Transaction.deriveSignatureId(transactionId, this.index)
     const payload = { signature: encode(sig) }
     const Authorization = await this.getAuthorization(payload)
     const { data } = await this.connection.patch<
       Awaited<ReturnType<typeof this.getSignature>>
-    >(`/transaction/${transactionId}`, payload, { headers: { Authorization } })
+    >(`/signature/${signatureId}`, payload, { headers: { Authorization } })
     return data
   }
 
@@ -200,9 +218,9 @@ export class Transaction extends Connection {
    * @returns Transaciton data
    */
   execTransaction = async (transactionId: string) => {
-    const { data } = await this.connection.get<
+    const { data } = await this.connection.patch<
       Awaited<ReturnType<typeof this.getTransaction>>
-    >(`/transaction/exec/${transactionId}`)
+    >(`/transaction/${transactionId}`)
     return data
   }
 
@@ -216,21 +234,22 @@ export class Transaction extends Connection {
     const extendedElgamal = new ExtendedElGamal()
     const elgamal = new ElGamal()
     const txs = await this.getTransactions({ approved: true })
+    const currentGid = encode(this.keypair.id)
     const currentPos = txs.findIndex(
-      ({ raw }) => encode(decode(raw).subarray(8, 16)) === this.index,
+      ({ raw }) => encode(decode(raw).subarray(8, 16)) === currentGid,
     )
     const waitingTxs = txs.slice(0, currentPos + 1)
     while (waitingTxs.length) {
       const { id: transactionId, raw } = waitingTxs.pop()
       const { signatures } = await this.getTransaction(transactionId)
-      const { pullrequest } = signatures.find(
-        ({ signer: { id } }) => id === this.index,
-      )
       const tx = decode(raw)
       const txType = selector.getType(tx.subarray(0, 8))
       const gid = tx.subarray(8, 16)
       const t = tx.subarray(16, 24)
       const n = tx.subarray(24, 32)
+      const { pullrequest } = signatures.find(
+        ({ index }) => index === this.index,
+      ) || { pullrequest: encode(tx.subarray(72)) }
       // n-Extension
       if (txType === TransactionType.nExtension) {
         const zero = elgamal.decrypt(
@@ -263,10 +282,7 @@ export class Transaction extends Connection {
         )
         const shares = signatures
           .filter(({ signature }) => !!signature)
-          .map(({ signature, signer: { id } }) => [
-            decode(id),
-            decode(signature),
-          ])
+          .map(({ signature, index }) => [decode(index), decode(signature)])
           .map(([id, signature]) => {
             const commitment = signature.subarray(64)
             return concatBytes(id, t, n, gid, commitment)
