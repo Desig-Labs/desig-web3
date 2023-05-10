@@ -11,8 +11,9 @@ export type SignerEntity = {
   genesis: string
   owner: string
   encryptedShare: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number
+  updatedAt: number
+  deletedAr: number
 }
 
 export type MultisigEntity = {
@@ -23,8 +24,8 @@ export type MultisigEntity = {
   curve: Curve
   creator: string
   sqrpriv?: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number
+  updatedAt: number
 }
 
 export type ProposalEntity = {
@@ -34,29 +35,29 @@ export type ProposalEntity = {
   raw: string
   R: string
   sqrhz?: string
-  ttl: number
+  ttl?: number
   creator: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number
+  updatedAt: number
 }
 
 export type ApprovalEntity = {
   id: string
   signature: string
   randomness: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number
+  updatedAt: number
 }
 
 export type TransactionEntity = {
   id: string
   msg: string
   raw: string
-  ttl: number
+  ttl?: number
   creator: string
   approved: boolean
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number
+  updatedAt: number
 }
 
 export type SignatureEntity = {
@@ -65,8 +66,8 @@ export type SignatureEntity = {
   owner: string
   signature: string
   pullrequest: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number
+  updatedAt: number
 }
 
 export type ApprovalEvents = 'insertApproval' | 'updateApproval'

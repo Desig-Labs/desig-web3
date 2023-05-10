@@ -115,7 +115,7 @@ export class Transaction extends Connection {
     const { data } = await this.connection.get<
       TransactionEntity & {
         multisig: MultisigEntity
-        signatures: SignatureEntity[]
+        signatures: Array<SignatureEntity & { signer: SignerEntity }>
       }
     >(`/transaction/${transactionId}`)
     return data
@@ -128,7 +128,10 @@ export class Transaction extends Connection {
    */
   getSignature = async (signatureId: string) => {
     const { data } = await this.connection.get<
-      SignatureEntity & { transaction: TransactionEntity }
+      SignatureEntity & {
+        signer: SignerEntity
+        transaction: TransactionEntity
+      }
     >(`/signature/${signatureId}`)
     return data
   }
@@ -169,7 +172,9 @@ export class Transaction extends Connection {
     const selector = new Selector()
     const elgamal = new ElGamal()
     const { msg, raw, signatures } = await this.getTransaction(transactionId)
-    const { pullrequest } = signatures.find(({ index }) => index === this.index)
+    const { pullrequest } = signatures.find(
+      ({ signer: { id } }) => id === this.index,
+    )
     // Auth signature
     let sig = this.sign(decode(this.index), decode(msg))
     // Handle transaction
@@ -248,7 +253,7 @@ export class Transaction extends Connection {
       const t = tx.subarray(16, 24)
       const n = tx.subarray(24, 32)
       const { pullrequest } = signatures.find(
-        ({ index }) => index === this.index,
+        ({ signer: { id } }) => id === this.index,
       ) || { pullrequest: encode(tx.subarray(72)) }
       // n-Extension
       if (txType === TransactionType.nExtension) {
@@ -282,7 +287,10 @@ export class Transaction extends Connection {
         )
         const shares = signatures
           .filter(({ signature }) => !!signature)
-          .map(({ signature, index }) => [decode(index), decode(signature)])
+          .map(({ signature, signer: { id } }) => [
+            decode(id),
+            decode(signature),
+          ])
           .map(([id, signature]) => {
             const commitment = signature.subarray(64)
             return concatBytes(id, t, n, gid, commitment)

@@ -60,7 +60,7 @@ export class Signer extends Connection {
         data: { raw, signatures },
       } = await this.connection.get<
         TransactionEntity & {
-          signatures: SignatureEntity[]
+          signatures: Array<SignatureEntity & { signer: SignerEntity }>
         }
       >(`/transaction/${genesis}`)
       // Compute the share
@@ -75,7 +75,10 @@ export class Signer extends Connection {
         decode(signerId),
         signatures
           .filter(({ signature }) => !!signature)
-          .map(({ signature, index }) => [decode(index), decode(signature)])
+          .map(({ signature, signer: { id } }) => [
+            decode(id),
+            decode(signature),
+          ])
           .map(([index, signature]) => {
             const commitment = signature.subarray(64)
             return concatBytes(index, t, n, gid, commitment)
