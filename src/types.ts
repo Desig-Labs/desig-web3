@@ -62,8 +62,6 @@ export type TransactionEntity = {
 
 export type SignatureEntity = {
   id: number
-  index: string
-  owner: string
   signature: string
   pullrequest: string
   createdAt: number
