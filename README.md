@@ -12,26 +12,34 @@ yarn add @desig/web3
 
 ## Usage
 
-### Interactive Mode
-
 ```ts
-import { DesigECDSAKeypair, Proposal } from '@desig/web3'
-import { CryptoSys } from '@desig/supported-chains'
+import { DesigKeypair, Multisig, Signer, Proposal, Transaction } from '@desig/web3'
 
-const secretShare = 'ecdsa/<master>/<share>'
-const keypair = DesigECDSAKeypair.fromSecret(secret)
-const dProposal = new Proposal('https://<ecdsa_cluster>', CryptoSys.ECDSA, keypair)
-await dProposal.approveProposal(<proposal.id>)
-```
+const cluster = 'https://mainnet.desig.io'
+const privkey = ''
+const secretShare = 'ed25519/<master>/<share>'
+const keypair = DesigKeypair.fromSecret(secret)
 
-### Read-only Mode
+// Create multisig instance
+const dMultisig = new Multisig(cluster, privkey)
+await dMultisig.getMultisigs()
+await dMultisig.getMultisig('multisigId')
 
-```ts
-import { CryptoSys, Multisig } from '@desig/web3'
-import { CryptoSys } from '@desig/supported-chains'
+// Create signer instance
+const dSigner = new Signer(cluster, privkey)
+await dSigner.getAllSigners()
+await dSigner.getSigner('signerId')
 
-const dMultisig = new Multisig('https://<ecdsa_cluster>', CryptoSys.ECDSA)
-await dMultisig.getMultisig(<multisig.id>)
+// Create proposal instance
+const dProposal = new Proposal(cluster, privkey, keypair)
+await dProposal.approveProposal('proposalId')
+await dProposal.initializeProposal({ raw: ..., msg: ..., chainId: ... })
+
+// Create transaction instance
+const dTransaction = new Transaction(cluster, privkey, keypair)
+await dTransaction.initializeTransaction({ type: ..., params: { ... }})
+await dTransaction.getTransaction('transactionId')
+await dTransaction.signTransaction('transactionId')
 ```
 
 ## Example
@@ -39,17 +47,21 @@ await dMultisig.getMultisig(<multisig.id>)
 ### Create a multisig
 
 ```ts
+import { encode } from 'bs58'
+import { utils } from '@noble/ed25519'
 import { Multisig } from '@desig/web3'
-import { CryptoSys } from '@desig/supported-chains'
+import { EdCurve } from '@desig/core'
+import { Curve } from '@desig/supported-chains'
 
-const dMultisig = new Multisig(
-  'https://<eddsa_or_ecdsa_cluster>',
-  CryptoSys.ECDSA,
-)
+const privkey = encode(utils.randomPrivateKey())
+const pubkey = encode(EdCurve.getPublicKey(decode(privkey)))
+
+const dMultisig = new Multisig('https://mainnet.desig.io', privkey)
 const t = 2
 const n = 2
-const pubkeys = ['<alice_pubkey>', '<bob_pubkey>']
-const multisig = await dMultisig.initializeMultisig({
+const pubkeys = [pubkey, pubkey] // You can change it to other members' pubkey
+const curve = Curve.ed25519 // Refer https://chainlist.desig.io/ to find the corresponding chain
+const multisig = await dMultisig.initializeMultisig(curve, {
   t,
   n,
   pubkeys,
@@ -60,24 +72,24 @@ const multisig = await dMultisig.initializeMultisig({
 
 ```ts
 import { Transaction } from '@solana/web3.js'
-import { DesigEdDSAKeypair, Proposal } from '@desig/web3'
+import { DesigKeypair, Proposal } from '@desig/web3'
 import { transfer, sendAndConfirm } from '<appendix_transfer_solana>'
-import { CryptoSys, SolanaDevnet } from '@desig/supported_chains'
+import { SolanaDevnet } from '@desig/supported_chains'
 
 // Create alice keypair and bob keypair from secrets sent to the emails
-const aliceKeypair = new DesigEdDSAKeypair('<alice_secret_share>')
-const bobKeypair = new DesigEdDSAKeypair('<bob_secret_share>')
+const aliceKeypair = new DesigKeypair('<alice_secret_share>')
+const bobKeypair = new DesigKeypair('<bob_secret_share>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
 // Alice initilizes a transaction
 const aliceProposal = new Proposal(
-  'https://<eddsa_cluster>',
-  CryptoSys.EdDSA,
+  'https://mainnet.desig.io',
+  alicePrivkey,
   aliceKeypair,
 )
 const bobProposal = new Proposal(
-  'https://<eddsa_cluster>',
-  CryptoSys.EdDSA,
+  'https://mainnet.desig.io',
+  bobPrivkey,
   bobKeypair,
 )
 const tx = transfer(masterkey, 5000)
@@ -105,24 +117,24 @@ const txHash = await sendAndConfirm(signedTx)
 
 ```ts
 import { Transaction, hexlify } from 'ethers'
-import { DesigECDSAKeypair, Proposal } from '@desig/web3'
+import { DesigKeypair, Proposal } from '@desig/web3'
 import { transfer, sendAndConfirm } from '<appendix_transfer_ethereum>'
 import { CryptoSys, Goerli } from '@desig/supported_chains'
 
 // Create alice keypair and bob keypair from secrets sent to the emails
-const aliceKeypair = new DesigECDSAKeypair('<alice_secret_share>')
-const bobKeypair = new DesigECDSAKeypair('<bob_secret_share>')
+const aliceKeypair = new DesigKeypair('<alice_secret_share>')
+const bobKeypair = new DesigKeypair('<bob_secret_share>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
 // Alice initilizes a transaction
 const aliceProposal = new Proposal(
-  'https://<ecdsa_cluster>',
-  CryptoSys.ECDSA,
+  'https://mainnet.desig.io',
+  alicePrivkey,
   aliceKeypair,
 )
 const bobProposal = new Proposal(
-  'https://<ecdsa_cluster>',
-  CryptoSys.ECDSA,
+  'https://mainnet.desig.io',
+  bobPrivkey,
   bobKeypair,
 )
 const tx = transfer(masterkey, 5000)
@@ -145,6 +157,10 @@ const signedTx = Transaction.from(hexlify(serializedTx))
 // Bob submits the transaction
 const txHash = await sendAndConfirm(signedTx)
 ```
+
+### More examples
+
+[https://github.com/Desig-Labs/desig-web3/tree/master/test](https://github.com/Desig-Labs/desig-web3/tree/master/test)
 
 ## Appendix
 

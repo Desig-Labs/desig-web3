@@ -13,7 +13,7 @@ export type SignerEntity = {
   encryptedShare: string
   createdAt: number
   updatedAt: number
-  deletedAr: number
+  deletedAt: number
 }
 
 export type MultisigEntity = {
