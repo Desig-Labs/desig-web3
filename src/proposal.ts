@@ -7,7 +7,7 @@ import { DesigKeypair } from './keypair'
 import { Multisig } from './multisig'
 import type {
   ExtendedApprovalEntity,
-  ExtendedPropsosalEntity,
+  ExtendedProposalEntity,
   PaginationParams,
 } from './types'
 import { Curve } from '@desig/supported-chains'
@@ -49,7 +49,7 @@ export class Proposal extends Connection {
     offset = 0,
     limit = 500,
   }: Partial<PaginationParams> = {}) => {
-    const { data } = await this.connection.get<ExtendedPropsosalEntity[]>(
+    const { data } = await this.connection.get<ExtendedProposalEntity[]>(
       '/proposal',
       {
         params: {
@@ -68,7 +68,7 @@ export class Proposal extends Connection {
    * @returns Proposal data
    */
   getProposal = async (proposalId: string) => {
-    const { data } = await this.connection.get<ExtendedPropsosalEntity>(
+    const { data } = await this.connection.get<ExtendedProposalEntity>(
       `/proposal/${proposalId}`,
     )
     return data
@@ -194,7 +194,7 @@ export class Proposal extends Connection {
   }
   // Finalize Ed25519 Signature
   private finalizeEd25519Signature = async (
-    approvals: ExtendedPropsosalEntity['approvals'],
+    approvals: ExtendedProposalEntity['approvals'],
   ) => {
     const secretSharing = new SecretSharing(EdTSS.ff)
     const indice = approvals.map(({ signer: { id } }) => decode(id))
@@ -210,7 +210,7 @@ export class Proposal extends Connection {
   }
   // Finalize Secp256k1 Signature
   private finalizeSecp256k1Signature = async (
-    approvals: ExtendedPropsosalEntity['approvals'],
+    approvals: ExtendedProposalEntity['approvals'],
     { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
   ) => {
     const secretSharing = new SecretSharing(ECTSS.ff)

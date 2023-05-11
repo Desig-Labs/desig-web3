@@ -118,7 +118,7 @@ export type ExtendedApprovalEntity = ApprovalEntity & {
   signer: Omit<SignerEntity, 'encryptedShare'>
 }
 
-export type ExtendedPropsosalEntity = ProposalEntity & {
+export type ExtendedProposalEntity = ProposalEntity & {
   multisig: MultisigEntity
   approvals: Array<
     ApprovalEntity & { signer: Omit<SignerEntity, 'encryptedShare'> }
