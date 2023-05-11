@@ -97,12 +97,11 @@ export class Transaction extends Connection {
       offset,
     }
     if (typeof approved === 'boolean') params.approved = approved
-    const { data } = await this.connection.get<TransactionEntity[]>(
-      '/transaction',
-      {
-        params,
-      },
-    )
+    const { data } = await this.connection.get<
+      Array<TransactionEntity & { signatures: SignatureEntity[] }>
+    >('/transaction', {
+      params,
+    })
     return data
   }
 

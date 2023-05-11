@@ -50,7 +50,9 @@ export class Proposal extends Connection {
     offset = 0,
     limit = 500,
   }: Partial<PaginationParams> = {}) => {
-    const { data } = await this.connection.get<ProposalEntity[]>('/proposal', {
+    const { data } = await this.connection.get<
+      Array<ProposalEntity & { approvals: ApprovalEntity[] }>
+    >('/proposal', {
       params: {
         multisigId: encode(this.keypair.masterkey),
         limit,
