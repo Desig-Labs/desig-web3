@@ -28,7 +28,7 @@ export { toSolanaAddress } from '@desig/supported-chains'
 /**
  * Add signture to a Solana transaction
  * @param transaction The Solana transaction (Ref: https://solana-labs.github.io/solana-web3.js/classes/Transaction.html)
- * @param {sig, addr} signature The product of `Proposal.finalizaSignature` extended the signer address
+ * @param { sig, addr } signature The product of `Proposal.finalizaSignature` extended the signer address
  * @returns
  */
 export const addSolTransaction = (

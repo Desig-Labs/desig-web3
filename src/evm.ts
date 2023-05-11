@@ -22,7 +22,7 @@ export { toEvmAddress } from '@desig/supported-chains'
 /**
  * Add signture to an EVM (i.e. Ethereum) transaction
  * @param transaction The serialize transaction
- * @param {sig, recv} signature The product of `Proposal.finalizeSignature`
+ * @param { sig, recv } signature The product of `Proposal.finalizeSignature`
  * @param chainId Chain id in hex (Ref: https://chainlist.desig.io/)
  * @returns The serialized signed transaction
  */
