@@ -1,6 +1,4 @@
-import { hexlify, getAddress, isAddress, Transaction, toBigInt } from 'ethers'
-import { keccak_256 } from '@noble/hashes/sha3'
-import { Point } from '@noble/secp256k1'
+import { hexlify, isAddress, Transaction, toBigInt } from 'ethers'
 
 /**
  * Validate EVM address
@@ -19,13 +17,7 @@ export const isEvmAddress = (
  * @param pubkey Compressed pubkey
  * @returns EVM address with checksum
  */
-export const toEvmAddress = (pubkey: Uint8Array) => {
-  const point = Point.fromHex(pubkey)
-  const pub = point.toRawBytes().subarray(1)
-  const hash = hexlify(keccak_256(pub).slice(-20))
-  const address = getAddress(hash)
-  return address
-}
+export { toEvmAddress } from '@desig/supported-chains'
 
 /**
  * Add signture to an EVM (i.e. Ethereum) transaction

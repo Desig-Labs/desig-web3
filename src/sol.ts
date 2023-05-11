@@ -1,5 +1,4 @@
 import { PublicKey, Transaction } from '@solana/web3.js'
-import { encode } from 'bs58'
 
 /**
  * Validate Solana address
@@ -24,9 +23,7 @@ export const isSolanaAddress = (
  * @param pubkey Pubkey
  * @returns Solana address
  */
-export const toSolanaAddress = (pubkey: Uint8Array) => {
-  return encode(pubkey)
-}
+export { toSolanaAddress } from '@desig/supported-chains'
 
 /**
  * Add signture to a Solana transaction
