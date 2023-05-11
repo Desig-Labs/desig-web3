@@ -1,9 +1,17 @@
 import { Curve } from '@desig/supported-chains'
 
+/**
+ * Pagination
+ */
+
 export type PaginationParams = {
   offset: number
   limit: number
 }
+
+/**
+ * Basics
+ */
 
 export type SignerEntity = {
   id: string
@@ -68,6 +76,10 @@ export type SignatureEntity = {
   updatedAt: number
 }
 
+/**
+ * Events
+ */
+
 export type ApprovalEvents = 'insertApproval' | 'updateApproval'
 export type ApprovalEventResponse = ApprovalEntity & {
   proposal: Omit<ProposalEntity, 'approvals'>
@@ -78,6 +90,10 @@ export type SignatureEventResponse = SignatureEntity & {
   transaction: Omit<TransactionEntity, 'signatures'>
 }
 
+/**
+ * Transaction types
+ */
+
 export enum TransactionType {
   tExtension = 'tExtension',
   tReduction = 'tReduction',
@@ -87,4 +103,36 @@ export enum TransactionType {
 export type TransactionParams = {
   index?: string
   pubkey?: string
+}
+
+/**
+ * Extended
+ */
+
+export type ExtendedSignerEntity = SignerEntity & {
+  multisig: MultisigEntity
+}
+
+export type ExtendedApprovalEntity = ApprovalEntity & {
+  proposal: ProposalEntity
+  signer: Omit<SignerEntity, 'encryptedShare'>
+}
+
+export type ExtendedPropsosalEntity = ProposalEntity & {
+  multisig: MultisigEntity
+  approvals: Array<
+    ApprovalEntity & { signer: Omit<SignerEntity, 'encryptedShare'> }
+  >
+}
+
+export type ExtendedSignatureEntity = SignatureEntity & {
+  transaction: TransactionEntity
+  signer: Omit<SignerEntity, 'encryptedShare'>
+}
+
+export type ExtendedTransactionEntity = TransactionEntity & {
+  multisig: MultisigEntity
+  signatures: Array<
+    SignatureEntity & { signer: Omit<SignerEntity, 'encryptedShare'> }
+  >
 }

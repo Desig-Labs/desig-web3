@@ -11,11 +11,10 @@ import { concatBytes } from '@noble/hashes/utils'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { decode, encode } from 'bs58'
 import {
-  MultisigEntity,
+  ExtendedSignatureEntity,
+  ExtendedSignerEntity,
+  ExtendedTransactionEntity,
   PaginationParams,
-  SignatureEntity,
-  SignerEntity,
-  TransactionEntity,
   TransactionParams,
   TransactionType,
 } from './types'
@@ -97,11 +96,12 @@ export class Transaction extends Connection {
       offset,
     }
     if (typeof approved === 'boolean') params.approved = approved
-    const { data } = await this.connection.get<
-      Array<TransactionEntity & { signatures: SignatureEntity[] }>
-    >('/transaction', {
-      params,
-    })
+    const { data } = await this.connection.get<ExtendedTransactionEntity[]>(
+      '/transaction',
+      {
+        params,
+      },
+    )
     return data
   }
 
@@ -111,12 +111,9 @@ export class Transaction extends Connection {
    * @returns Transaction data
    */
   getTransaction = async (transactionId: string) => {
-    const { data } = await this.connection.get<
-      TransactionEntity & {
-        multisig: MultisigEntity
-        signatures: Array<SignatureEntity & { signer: SignerEntity }>
-      }
-    >(`/transaction/${transactionId}`)
+    const { data } = await this.connection.get<ExtendedTransactionEntity>(
+      `/transaction/${transactionId}`,
+    )
     return data
   }
 
@@ -126,12 +123,9 @@ export class Transaction extends Connection {
    * @returns Signature data
    */
   getSignature = async (signatureId: string) => {
-    const { data } = await this.connection.get<
-      SignatureEntity & {
-        signer: SignerEntity
-        transaction: TransactionEntity
-      }
-    >(`/signature/${signatureId}`)
+    const { data } = await this.connection.get<ExtendedSignatureEntity>(
+      `/signature/${signatureId}`,
+    )
     return data
   }
 
@@ -320,9 +314,11 @@ export class Transaction extends Connection {
     )
     const payload = { activated: true, encryptedShare }
     const Authorization = await this.getAuthorization(payload)
-    const { data } = await this.connection.patch<
-      SignerEntity & { multisig: MultisigEntity }
-    >(`/signer/${this.index}`, payload, { headers: { Authorization } })
+    const { data } = await this.connection.patch<ExtendedSignerEntity>(
+      `/signer/${this.index}`,
+      payload,
+      { headers: { Authorization } },
+    )
     return data
   }
 }

@@ -6,10 +6,9 @@ import { Connection } from './connection'
 import { DesigKeypair } from './keypair'
 import { Multisig } from './multisig'
 import type {
-  ApprovalEntity,
+  ExtendedApprovalEntity,
+  ExtendedPropsosalEntity,
   PaginationParams,
-  ProposalEntity,
-  SignerEntity,
 } from './types'
 import { Curve } from '@desig/supported-chains'
 
@@ -50,15 +49,16 @@ export class Proposal extends Connection {
     offset = 0,
     limit = 500,
   }: Partial<PaginationParams> = {}) => {
-    const { data } = await this.connection.get<
-      Array<ProposalEntity & { approvals: ApprovalEntity[] }>
-    >('/proposal', {
-      params: {
-        multisigId: encode(this.keypair.masterkey),
-        limit,
-        offset,
+    const { data } = await this.connection.get<ExtendedPropsosalEntity[]>(
+      '/proposal',
+      {
+        params: {
+          multisigId: encode(this.keypair.masterkey),
+          limit,
+          offset,
+        },
       },
-    })
+    )
     return data
   }
 
@@ -68,11 +68,9 @@ export class Proposal extends Connection {
    * @returns Proposal data
    */
   getProposal = async (proposalId: string) => {
-    const { data } = await this.connection.get<
-      ProposalEntity & {
-        approvals: Array<ApprovalEntity & { signer: SignerEntity }>
-      }
-    >(`/proposal/${proposalId}`)
+    const { data } = await this.connection.get<ExtendedPropsosalEntity>(
+      `/proposal/${proposalId}`,
+    )
     return data
   }
 
@@ -82,9 +80,9 @@ export class Proposal extends Connection {
    * @returns Approval data
    */
   getApproval = async (approvalId: string) => {
-    const { data } = await this.connection.get<
-      ApprovalEntity & { proposal: ProposalEntity; signer: SignerEntity }
-    >(`/approval/${approvalId}`)
+    const { data } = await this.connection.get<ExtendedApprovalEntity>(
+      `/approval/${approvalId}`,
+    )
     return data
   }
 
@@ -102,7 +100,7 @@ export class Proposal extends Connection {
     raw: Uint8Array
     msg: Uint8Array
     chainId: string
-  }): Promise<ProposalEntity> => {
+  }) => {
     const payload = {
       multisigId: encode(this.keypair.masterkey),
       msg: encode(msg),
@@ -196,7 +194,7 @@ export class Proposal extends Connection {
   }
   // Finalize Ed25519 Signature
   private finalizeEd25519Signature = async (
-    approvals: Array<ApprovalEntity & { signer: SignerEntity }>,
+    approvals: ExtendedPropsosalEntity['approvals'],
   ) => {
     const secretSharing = new SecretSharing(EdTSS.ff)
     const indice = approvals.map(({ signer: { id } }) => decode(id))
@@ -212,7 +210,7 @@ export class Proposal extends Connection {
   }
   // Finalize Secp256k1 Signature
   private finalizeSecp256k1Signature = async (
-    approvals: Array<ApprovalEntity & { signer: SignerEntity }>,
+    approvals: ExtendedPropsosalEntity['approvals'],
     { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
   ) => {
     const secretSharing = new SecretSharing(ECTSS.ff)
