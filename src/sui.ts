@@ -1,5 +1,4 @@
-import { Ed25519PublicKey, TransactionBlock } from '@mysten/sui.js'
-import { getBytes } from 'ethers'
+import { TransactionBlock, isValidSuiAddress } from '@mysten/sui.js'
 
 /**
  * Validate Sui address
@@ -11,9 +10,8 @@ export const isSuiAddress = (
 ): address is string => {
   if (!address) return false
   try {
-    const publicKey = new Ed25519PublicKey(getBytes(address))
-    if (!publicKey) throw new Error('Invalid public key')
-    return true
+    const ok = isValidSuiAddress(address)
+    return ok
   } catch (er) {
     return false
   }

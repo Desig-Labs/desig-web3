@@ -5,9 +5,17 @@ import { encode } from 'bs58'
 import { DesigKeypair } from './keypair'
 import { concatBytes } from '@noble/hashes/utils'
 import { keccak_256 } from '@noble/hashes/sha3'
+import WebSocket from 'isomorphic-ws'
+
+export enum EventStreaming {
+  signer = 'signer',
+  approval = 'approval',
+  signature = 'signature',
+}
 
 export class Connection {
   protected readonly connection: AxiosInstance
+  private sockets: Record<string, WebSocket> = {}
 
   constructor(
     public readonly cluster: string,
@@ -66,5 +74,35 @@ export class Connection {
     } catch (er: any) {
       return false
     }
+  }
+
+  /**
+   * Get a websocket client
+   * @param event Event
+   * @param param owner / signerId
+   * @returns
+   */
+  private io = (event: EventStreaming, param: string) => {
+    const route = `${event}/${param}`
+    if (!this.sockets[route])
+      this.sockets[route] = new WebSocket(
+        `${this.connection.getUri()}/ws/${route}`.replace('http', 'ws'),
+      )
+    return this.sockets[route]
+  }
+
+  /**
+   * Event streaming
+   * @param event Event
+   * @param param owner / signerId
+   */
+  public on = (
+    event: EventStreaming,
+    param: string,
+    callback: (id: string) => void = () => {},
+  ) => {
+    const socket = this.io(event, param)
+    socket.onmessage = ({ data }) => callback(data.toString())
+    return () => socket.terminate()
   }
 }
