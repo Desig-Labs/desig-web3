@@ -21,7 +21,7 @@ export class Signer extends Connection {
    * @param callback
    * @returns Close function
    */
-  watch = (callback: (signerId: string) => void) => {
+  watch = (callback: (signerId: string, er?: string) => void) => {
     const unwatch = this.on(EventStreaming.signer, this.owner, callback)
     return unwatch
   }

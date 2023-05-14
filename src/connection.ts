@@ -99,10 +99,13 @@ export class Connection {
   public on = (
     event: EventStreaming,
     param: string,
-    callback: (id: string) => void,
+    callback: (id: string, er?: string) => void,
   ) => {
     const socket = this.io(event, param)
+    socket.onerror = ({ error }) => callback('', error)
     socket.onmessage = ({ data }) => callback(data.toString())
-    return () => socket.terminate()
+    return () => {
+      if (!socket.CLOSED) socket.close()
+    }
   }
 }
