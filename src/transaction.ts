@@ -81,8 +81,12 @@ export class Transaction extends Connection {
    * @param callback
    * @returns Close function
    */
-  watch = (callback: (signerId: string, er?: string) => void) => {
-    const unwatch = this.on(EventStreaming.signature, this.index, callback)
+  watch = async (callback: (signerId: string, er?: string) => void) => {
+    const unwatch = await this.on(
+      EventStreaming.signature,
+      this.index,
+      callback,
+    )
     return unwatch
   }
 

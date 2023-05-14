@@ -44,8 +44,8 @@ export class Proposal extends Connection {
    * @param callback
    * @returns Close function
    */
-  watch = (callback: (signerId: string, er?: string) => void) => {
-    const unwatch = this.on(EventStreaming.approval, this.index, callback)
+  watch = async (callback: (signerId: string, er?: string) => void) => {
+    const unwatch = await this.on(EventStreaming.approval, this.index, callback)
     return unwatch
   }
 
