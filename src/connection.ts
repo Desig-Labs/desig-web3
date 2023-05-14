@@ -15,7 +15,6 @@ export enum EventStreaming {
 
 export class Connection {
   protected readonly connection: AxiosInstance
-  private sockets: Record<string, WebSocket> = {}
 
   constructor(
     public readonly cluster: string,
@@ -77,29 +76,6 @@ export class Connection {
   }
 
   /**
-   * Get a websocket client
-   * @param event Event
-   * @param param owner / signerId
-   * @returns
-   */
-  private io = (event: EventStreaming, param: string) => {
-    const route = `${event}/${param}`
-    if (!this.sockets[route])
-      this.sockets[route] = new WebSocket(
-        `${this.connection.getUri()}/ws/${route}`.replace('http', 'ws'),
-      )
-    return {
-      socket: this.sockets[route],
-      close: () => {
-        if (this.sockets[route]?.close)
-          this.sockets[route].close(1000, 'Session ended.')
-        if (this.sockets[route]?.terminate) this.sockets[route].terminate()
-        this.sockets[route] = undefined
-      },
-    }
-  }
-
-  /**
    * Event streaming
    * @param event Event
    * @param param owner / signerId
@@ -109,10 +85,14 @@ export class Connection {
     param: string,
     callback: (id: string, er?: string) => void,
   ) => {
-    const { socket, close } = this.io(event, param)
+    const socket = new WebSocket(
+      `${this.connection.getUri()}/ws/${event}/${param}`.replace('http', 'ws'),
+    )
     socket.onmessage = ({ data }) => callback(data.toString())
     socket.onerror = ({ message }) => callback('', message)
-    socket.onclose = close
-    return close
+    return () => {
+      if (socket.close) socket.close(1000, 'Session ended.')
+      if (socket.terminate) socket.terminate()
+    }
   }
 }
