@@ -96,17 +96,20 @@ export class Connection {
    * @param event Event
    * @param param owner / signerId
    */
-  public on = (
+  on = async (
     event: EventStreaming,
     param: string,
     callback: (id: string, er?: string) => void,
-  ) => {
-    const socket = this.io(event, param)
-    socket.onerror = ({ message }) => callback('', message)
-    socket.onmessage = ({ data }) => callback(data.toString())
-    return () => {
-      if (!!socket.close) socket.close(1000, 'Session ended.')
-      if (!!socket.terminate) socket.terminate()
-    }
+  ): Promise<() => void> => {
+    return new Promise((resolve, reject) => {
+      const socket = this.io(event, param)
+      socket.onmessage = ({ data }) => callback(data.toString())
+      socket.onopen = () =>
+        resolve(() => {
+          if (!!socket.close) socket.close(1000, 'Session ended.')
+          if (!!socket.terminate) socket.terminate()
+        })
+      socket.onerror = ({ message }) => reject(message)
+    })
   }
 }
