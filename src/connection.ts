@@ -102,7 +102,7 @@ export class Connection {
     callback: (id: string, er?: string) => void,
   ) => {
     const socket = this.io(event, param)
-    socket.onerror = ({ error }) => callback('', error)
+    socket.onerror = ({ message }) => callback('', message)
     socket.onmessage = ({ data }) => callback(data.toString())
     return () => {
       if (!socket.CLOSED) socket.close()
