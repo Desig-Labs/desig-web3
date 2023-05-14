@@ -5,7 +5,7 @@ import {
   ExtendedElGamal,
   SecretSharing,
 } from '@desig/core'
-import { Connection } from './connection'
+import { Connection, EventStreaming } from './connection'
 import { DesigKeypair } from './keypair'
 import { concatBytes } from '@noble/hashes/utils'
 import { keccak_256 } from '@noble/hashes/sha3'
@@ -74,6 +74,16 @@ export class Transaction extends Connection {
   static deriveSignatureId(transactionId: string, signerId: string) {
     const seed = concatBytes(decode(transactionId), decode(signerId))
     return encode(keccak_256(seed))
+  }
+
+  /**
+   * Watch new signature
+   * @param callback
+   * @returns Close function
+   */
+  watch = (callback: (signerId: string) => void) => {
+    const unwatch = this.on(EventStreaming.signature, this.index, callback)
+    return unwatch
   }
 
   /**

@@ -99,7 +99,7 @@ export class Connection {
   public on = (
     event: EventStreaming,
     param: string,
-    callback: (id: string) => void = () => {},
+    callback: (id: string) => void,
   ) => {
     const socket = this.io(event, param)
     socket.onmessage = ({ data }) => callback(data.toString())

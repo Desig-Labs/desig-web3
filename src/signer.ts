@@ -1,6 +1,6 @@
 import { ElGamal, ExtendedElGamal, SecretSharing } from '@desig/core'
 import { decode, encode } from 'bs58'
-import { Connection } from './connection'
+import { Connection, EventStreaming } from './connection'
 import type {
   MultisigEntity,
   SignatureEntity,
@@ -14,6 +14,16 @@ import { ec } from './utils'
 export class Signer extends Connection {
   constructor(cluster: string, privkey: string) {
     super(cluster, decode(privkey))
+  }
+
+  /**
+   * Watch new signer
+   * @param callback
+   * @returns Close function
+   */
+  watch = (callback: (signerId: string) => void) => {
+    const unwatch = this.on(EventStreaming.signer, this.owner, callback)
+    return unwatch
   }
 
   /**

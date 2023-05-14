@@ -2,7 +2,7 @@ import { ECTSS, EdCurve, EdTSS, ElGamal, SecretSharing } from '@desig/core'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { concatBytes } from '@noble/hashes/utils'
 import { decode, encode } from 'bs58'
-import { Connection } from './connection'
+import { Connection, EventStreaming } from './connection'
 import { DesigKeypair } from './keypair'
 import { Multisig } from './multisig'
 import type {
@@ -37,6 +37,16 @@ export class Proposal extends Connection {
   static deriveApprovalId(proposalId: string, signerId: string) {
     const seed = concatBytes(decode(proposalId), decode(signerId))
     return encode(keccak_256(seed))
+  }
+
+  /**
+   * Watch new approval
+   * @param callback
+   * @returns Close function
+   */
+  watch = (callback: (signerId: string) => void) => {
+    const unwatch = this.on(EventStreaming.approval, this.index, callback)
+    return unwatch
   }
 
   /**
