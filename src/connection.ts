@@ -105,7 +105,8 @@ export class Connection {
     socket.onerror = ({ message }) => callback('', message)
     socket.onmessage = ({ data }) => callback(data.toString())
     return () => {
-      if (!socket.CLOSED) socket.close()
+      if (!!socket.close) socket.close(1000, 'Session ended.')
+      if (!!socket.terminate) socket.terminate()
     }
   }
 }
