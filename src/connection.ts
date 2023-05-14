@@ -91,9 +91,9 @@ export class Connection {
     return {
       socket: this.sockets[route],
       close: () => {
-        if (!!this.sockets[route].close)
+        if (this.sockets[route]?.close)
           this.sockets[route].close(1000, 'Session ended.')
-        if (!!this.sockets[route].terminate) this.sockets[route].terminate()
+        if (this.sockets[route]?.terminate) this.sockets[route].terminate()
         this.sockets[route] = undefined
       },
     }
