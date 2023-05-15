@@ -13,10 +13,12 @@ yarn add @desig/web3
 ## Usage
 
 ```ts
+import { encode } from 'bs58'
+import { utils } from '@noble/ed25519'
 import { DesigKeypair, Multisig, Signer, Proposal, Transaction } from '@desig/web3'
 
 const cluster = 'https://mainnet.desig.io'
-const privkey = ''
+const privkey = encode(utils.randomPrivateKey())
 const secretShare = 'ed25519/<master>/<share>'
 const keypair = DesigKeypair.fromSecret(secret)
 
