@@ -42,6 +42,7 @@ export type ProposalEntity = {
   msg: string
   raw: string
   R: string
+  txHash: string
   sqrhz?: string
   ttl?: number
   creator: string

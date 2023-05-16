@@ -182,15 +182,29 @@ export class Proposal extends Connection {
   }
 
   /**
+   * Update tx hash for ux utilities.
+   * @param proposalId Proposal id
+   * @param txHash Transaction hash
+   */
+  updateTxHash = async (proposalId: string, txHash: string) => {
+    const payload = { txHash }
+    const Authorization = await this.getAuthorization(payload)
+    const { data } = await this.connection.patch<
+      Awaited<ReturnType<typeof this.getProposal>>
+    >(`/proposal/${proposalId}`, payload, { headers: { Authorization } })
+    return data
+  }
+
+  /**
    * Finalize the partial signatures. The function will combine the partial signatures and construct the valid signature.
-   * @param id Proposal id
+   * @param proposalId Proposal id
    * @returns Master signature
    */
   finalizeSignature = async (
-    id: string,
+    proposalId: string,
   ): Promise<{ sig: Uint8Array; recv?: number }> => {
     const { t } = this.keypair.getThreshold()
-    const { msg, R, sqrhz, approvals } = await this.getProposal(id)
+    const { msg, R, sqrhz, approvals } = await this.getProposal(proposalId)
     const signatures = approvals.filter(({ signature }) => !!signature)
     if (signatures.length < t)
       throw new Error(
