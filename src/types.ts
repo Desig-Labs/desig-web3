@@ -5,8 +5,8 @@ import { Curve } from '@desig/supported-chains'
  */
 
 export type PaginationParams = {
-  offset: number
-  limit: number
+  size: number
+  after: string
 }
 
 /**

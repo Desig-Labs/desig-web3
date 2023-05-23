@@ -95,15 +95,15 @@ export class Transaction extends Connection {
    */
   getTransactions = async (
     { approved }: Partial<{ approved: boolean }> = {},
-    { offset = 0, limit = 500 }: Partial<PaginationParams> = {},
+    { size = 10, after }: Partial<PaginationParams> = {},
   ) => {
     const params: PaginationParams & {
       multisigId: string
       approved?: boolean
     } = {
       multisigId: encode(this.keypair.masterkey),
-      limit,
-      offset,
+      size,
+      after,
     }
     if (typeof approved === 'boolean') params.approved = approved
     const { data } = await this.connection.get<ExtendedTransactionEntity[]>(
@@ -222,7 +222,6 @@ export class Transaction extends Connection {
   /**
    * Execute a transaction.
    * @param transactionId Transaciton id
-   * @param executable Execute the transaction btw
    * @returns Transaciton data
    */
   execTransaction = async (transactionId: string) => {
