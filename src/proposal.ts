@@ -51,19 +51,21 @@ export class Proposal extends Connection {
 
   /**
    * Get proposals data. Note that it's only about multisig info.
+   * @param chainId Chain id
    * @param pagination.size Page size
    * @param pagination.after Page cursor
    * @returns Proposal data
    */
-  getProposals = async ({
-    size = 10,
-    after,
-  }: Partial<PaginationParams> = {}) => {
+  getProposals = async (
+    chainId: string,
+    { size = 10, after }: Partial<PaginationParams> = {},
+  ) => {
     const { data } = await this.connection.get<ExtendedProposalEntity[]>(
       '/proposal',
       {
         params: {
           multisigId: encode(this.keypair.masterkey),
+          chainId,
           size,
           after,
         },

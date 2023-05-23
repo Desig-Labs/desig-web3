@@ -63,7 +63,7 @@ describe('secp256k1: proposal', () => {
   })
 
   it('get proposals', async () => {
-    const proposals = await alice.getProposals({})
+    const proposals = await alice.getProposals(chain.secp256k1.chainId)
     expect(proposals.length).is.greaterThan(0)
   })
 

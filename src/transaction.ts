@@ -89,14 +89,15 @@ export class Transaction extends Connection {
   /**
    * Get transactions data.
    * @param filter.approved Approved
-   * @param pagination.limit Limit
-   * @param pagination.offset Offset
+   * @param pagination.size Page size
+   * @param pagination.after Page cursor
    * @returns Transaction data
    */
-  getTransactions = async (
-    { approved }: Partial<{ approved: boolean }> = {},
-    { size = 10, after }: Partial<PaginationParams> = {},
-  ) => {
+  getTransactions = async ({
+    approved,
+    size = 10,
+    after,
+  }: Partial<{ approved: boolean } & PaginationParams> = {}) => {
     const params: PaginationParams & {
       multisigId: string
       approved?: boolean

@@ -63,7 +63,7 @@ describe('ed25519: proposal', () => {
   })
 
   it('get proposals', async () => {
-    const proposals = await alice.getProposals()
+    const proposals = await alice.getProposals(chain.ed25519.chainId)
     expect(proposals.length).is.greaterThan(0)
   })
 
