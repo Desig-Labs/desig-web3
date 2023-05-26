@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@desig/core": "^0.2.6",
-    "@desig/supported-chains": "^1.0.9",
+    "@desig/supported-chains": "^1.0.13",
     "@mysten/sui.js": "^0.34.0",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.5",
