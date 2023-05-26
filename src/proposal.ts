@@ -44,7 +44,7 @@ export class Proposal extends Connection {
    * @param callback
    * @returns Close function
    */
-  watch = (callback: (multisigId: string, er?: string) => void) => {
+  watch = (callback: (approvalId: string, er?: string) => void) => {
     const unwatch = this.on(EventStreaming.approval, this.index, callback)
     return unwatch
   }

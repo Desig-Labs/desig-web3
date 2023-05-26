@@ -81,7 +81,7 @@ export class Transaction extends Connection {
    * @param callback
    * @returns Close function
    */
-  watch = (callback: (multisigId: string, er?: string) => void) => {
+  watch = (callback: (signatureId: string, er?: string) => void) => {
     const unwatch = this.on(EventStreaming.signature, this.index, callback)
     return unwatch
   }
