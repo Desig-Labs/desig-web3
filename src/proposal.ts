@@ -45,7 +45,8 @@ export class Proposal extends Connection {
    * @returns Close function
    */
   watch = (callback: (approvalId: string, er?: string) => void) => {
-    const unwatch = this.on(EventStreaming.approval, this.index, callback)
+    const multisigId = encode(this.keypair.masterkey)
+    const unwatch = this.on(EventStreaming.approval, multisigId, callback)
     return unwatch
   }
 

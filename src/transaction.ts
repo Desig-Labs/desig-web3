@@ -82,7 +82,8 @@ export class Transaction extends Connection {
    * @returns Close function
    */
   watch = (callback: (signatureId: string, er?: string) => void) => {
-    const unwatch = this.on(EventStreaming.signature, this.index, callback)
+    const multisigId = encode(this.keypair.masterkey)
+    const unwatch = this.on(EventStreaming.signature, multisigId, callback)
     return unwatch
   }
 
