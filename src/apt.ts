@@ -1,4 +1,3 @@
-import { Point } from '@noble/ed25519'
 import { hexToBytes } from '@noble/hashes/utils'
 
 /**
@@ -11,9 +10,8 @@ export const isAptosAddress = (
 ): address is string => {
   if (!address) return false
   try {
-    const point = hexToBytes(address.replace('0x', ''))
-    Point.fromHex(point)
-    return true
+    const buf = hexToBytes(address.replace('0x', ''))
+    return buf.length === 32
   } catch (er) {
     return false
   }
