@@ -156,8 +156,7 @@ export class Proposal extends Connection {
   }
   // Approve Ed25519 Proposal
   private approveEd25519Proposal = async (proposalId: string) => {
-    const data = await this.getProposal(proposalId)
-    const { msg, approvals, R } = data
+    const { msg, approvals, R } = await this.getProposal(proposalId)
     const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.index),
     )
@@ -174,13 +173,13 @@ export class Proposal extends Connection {
   }
   // Approve Secp256k1 Proposal
   private approveSecp256k1Proposal = async (proposalId: string) => {
-    const { approvals, R } = await this.getProposal(proposalId)
+    const { msg, approvals, R } = await this.getProposal(proposalId)
     const { randomness } = approvals.find(
       ({ signer: { id } }) => id === encode(this.keypair.index),
     )
     const elgamal = new ElGamal()
-    const r = elgamal.decrypt(decode(randomness), this.privkey)
-    const signature = ECTSS.sign(decode(R), r, this.keypair.share)
+    const x = elgamal.decrypt(decode(randomness), this.privkey)
+    const signature = ECTSS.sign(decode(msg), decode(R), x, this.keypair.share)
     return encode(signature)
   }
 
@@ -206,58 +205,14 @@ export class Proposal extends Connection {
   finalizeSignature = async (
     proposalId: string,
   ): Promise<{ sig: Uint8Array; recv?: number }> => {
-    const { t } = this.keypair.getThreshold()
-    const { msg, R, sqrhz, approvals } = await this.getProposal(proposalId)
-    const signatures = approvals.filter(({ signature }) => !!signature)
-    if (signatures.length < t)
-      throw new Error(
-        `Insufficient number of signatures. Require ${t} but got ${signatures.length}.`,
-      )
-    if (this.keypair.curve === Curve.ed25519)
-      return this.finalizeEd25519Signature(signatures)
-    if (this.keypair.curve === Curve.secp256k1)
-      return this.finalizeSecp256k1Signature(signatures, { msg, R, sqrhz })
-    throw new Error('Unsupported elliptic curve.')
-  }
-  // Finalize Ed25519 Signature
-  private finalizeEd25519Signature = async (
-    approvals: ExtendedProposalEntity['approvals'],
-  ) => {
-    const secretSharing = new SecretSharing(EdTSS.ff)
-    const indice = approvals.map(({ signer: { id } }) => decode(id))
-    const pi = secretSharing.pi(indice)
-    const sigs = approvals.map(({ signature }, i) =>
-      concatBytes(
-        EdCurve.mulScalar(decode(signature).subarray(0, 32), pi[i]),
-        secretSharing.yl(decode(signature).subarray(32), pi[i]),
-      ),
-    )
-    const sig = EdTSS.addSig(sigs)
-    return { sig }
-  }
-  // Finalize Secp256k1 Signature
-  private finalizeSecp256k1Signature = async (
-    approvals: ExtendedProposalEntity['approvals'],
-    { msg, R, sqrhz }: { msg: string; R: string; sqrhz: string },
-  ) => {
-    const secretSharing = new SecretSharing(ECTSS.ff)
-    const multisig = new Multisig(this.cluster, encode(this.privkey))
-    const multisigId = encode(this.keypair.masterkey)
-    const { sqrpriv } = await multisig.getMultisig(multisigId)
-    if (!sqrpriv) throw new Error('Invalid transaction.')
-    const indice = approvals.map(({ signer: { id } }) => decode(id))
-    const pi = secretSharing.pi(indice)
-    const sigs = approvals.map(({ signature }, i) =>
-      secretSharing.yl(decode(signature), pi[i]),
-    )
-    const [sig, recv] = ECTSS.addSig(
-      sigs,
-      decode(msg),
-      decode(R),
-      decode(sqrpriv),
-      decode(sqrhz),
-    )
-    return { sig, recv }
+    const {
+      data: { sig, recv },
+    } = await this.connection.get<
+      Awaited<{ sig: string; recv: number | undefined }>
+    >(`/proposal/${proposalId}/signature`, {
+      headers: { 'X-Desig-Curve': this.keypair.curve },
+    })
+    return { sig: decode(sig), recv }
   }
 
   /**

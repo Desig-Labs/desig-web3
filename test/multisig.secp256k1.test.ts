@@ -26,7 +26,6 @@ describe('secp256k1: multisig', () => {
     multisigId = data.id
     expect(data.t).equals(t)
     expect(data.n).equals(n)
-    expect(data.sqrpriv).to.not.empty
     expect(multisigId).to.not.empty
   })
 
@@ -34,6 +33,5 @@ describe('secp256k1: multisig', () => {
     const data = await multisig.getMultisig(multisigId)
     expect(data.t).equals(t)
     expect(data.n).equals(n)
-    expect(data.sqrpriv).to.not.empty
   })
 })
