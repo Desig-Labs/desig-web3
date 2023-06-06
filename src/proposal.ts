@@ -109,17 +109,20 @@ export class Proposal extends Connection {
     raw,
     msg,
     chainId,
+    ttl,
   }: {
     raw: Uint8Array
     msg: Uint8Array
     chainId: string
+    ttl?: number
   }) => {
-    const payload = {
+    const payload: any = {
       multisigId: encode(this.keypair.masterkey),
       msg: encode(msg),
       raw: encode(raw),
       chainId,
     }
+    if (ttl) payload.ttl = ttl
     const Authorization = await this.getAuthorization(payload)
     const { data } = await this.connection.post<
       Awaited<ReturnType<typeof this.getProposal>>

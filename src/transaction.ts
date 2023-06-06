@@ -150,15 +150,18 @@ export class Transaction extends Connection {
   initializeTransaction = async ({
     type,
     params,
+    ttl,
   }: {
     type: TransactionType
     params: TransactionParams
+    ttl?: number
   }) => {
-    const payload = {
+    const payload: any = {
       multisigId: encode(this.keypair.masterkey),
       type,
       params,
     }
+    if (ttl) payload.ttl = ttl
     const Authorization = await this.getAuthorization(payload)
     const { data } = await this.connection.post<
       Awaited<ReturnType<typeof this.getTransaction>>
