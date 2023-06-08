@@ -1,4 +1,4 @@
-import { TransactionBlock, isValidSuiAddress } from '@mysten/sui.js'
+import { isHex } from './utils'
 
 /**
  * Validate Sui address
@@ -10,8 +10,8 @@ export const isSuiAddress = (
 ): address is string => {
   if (!address) return false
   try {
-    const ok = isValidSuiAddress(address)
-    return ok
+    const length = isHex(address)
+    return length === 32
   } catch (er) {
     return false
   }
@@ -31,7 +31,7 @@ export { toSuiAddress } from '@desig/supported-chains'
  * @returns
  */
 export const addSuiSignature = (
-  transaction: TransactionBlock,
+  transaction: any,
   { sig, addr }: { sig: Uint8Array; addr: string },
 ) => {
   console.warn(

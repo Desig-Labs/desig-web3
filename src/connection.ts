@@ -8,6 +8,7 @@ import { keccak_256 } from '@noble/hashes/sha3'
 import WebSocket from 'isomorphic-ws'
 
 export enum EventStreaming {
+  multisig = 'multisig',
   signer = 'signer',
   approval = 'approval',
   signature = 'signature',

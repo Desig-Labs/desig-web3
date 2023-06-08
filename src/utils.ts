@@ -24,6 +24,17 @@ export const ec: Record<Curve, typeof EdCurve | typeof ECCurve> = {
 }
 
 /**
+ * Check string in hex format
+ * @param hex Hex string with 0x prefix
+ * @returns Hex byte length
+ */
+export const isHex = (hex: string): number => {
+  const ok = /^(0x|0X)?[a-fA-F0-9]+$/.test(hex) && hex.length % 2 === 0
+  if (!ok) return 0
+  return /^(0x|0X)/.test(hex) ? (hex.length - 2) / 2 : hex.length / 2
+}
+
+/**
  * Validate base58 format
  * @param str Base58 string
  * @returns

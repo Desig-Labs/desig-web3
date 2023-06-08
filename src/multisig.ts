@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Connection } from './connection'
+import { Connection, EventStreaming } from './connection'
 import type { MultisigEntity, SignerEntity } from './types'
 import { decode } from 'bs58'
 import { isAddress } from './utils'
@@ -8,6 +8,20 @@ import { Curve } from '@desig/supported-chains'
 export class Multisig extends Connection {
   constructor(cluster: string, privkey: string) {
     super(cluster, decode(privkey))
+  }
+
+  /**
+   * Watch new signature
+   * @param multisigId Multisig id
+   * @param callback
+   * @returns Close function
+   */
+  watch = (
+    multisigId: string,
+    callback: (multisigId: string, er?: string) => void,
+  ) => {
+    const unwatch = this.on(EventStreaming.multisig, multisigId, callback)
+    return unwatch
   }
 
   /**
