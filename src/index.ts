@@ -1,3 +1,5 @@
+require('module-alias/register')
+
 import * as ec from '@noble/secp256k1'
 import * as ed from '@noble/ed25519'
 import { sha512 } from '@noble/hashes/sha512'

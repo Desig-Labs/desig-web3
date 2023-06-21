@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Desig: The Blockchain-Agnostic Multisig Solution",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -22,17 +22,22 @@
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "prebuild": "yarn clean",
-    "build": "tsc",
+    "build:proto": "pbjs -t static-module -w commonjs -o proto/index.js ./src/**/*.proto && pbts -o proto/index.d.ts proto/index.js",
+    "build:ts": "tsc",
+    "prebuild": "yarn clean && mkdir proto",
+    "build": "yarn build:proto && yarn build:ts",
     "predeploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts",
     "deploy": "echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
     "pretest": "yarn build",
     "test": "mocha --exit --require ts-node/register -t 120000 test/**/*.*.test.ts",
     "test:watch": "nodemon --ext ts --watch src --watch test --exec \"yarn test\"",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist && rimraf proto"
   },
   "engines": {
     "node": ">=16 <=18"
+  },
+  "_moduleAliases": {
+    "@desig/proto": "./proto"
   },
   "dependencies": {
     "@desig/core": "^0.3.0",
@@ -46,6 +51,7 @@
     "bs58": "^5.0.0",
     "ethers": "^6.1.0",
     "isomorphic-ws": "^5.0.0",
+    "protobufjs": "^7.2.3",
     "ws": "^8.13.0",
     "zod": "^3.21.4"
   },
@@ -57,7 +63,9 @@
     "chai": "^4.3.7",
     "gh-pages": "^4.0.0",
     "mocha": "^10.2.0",
+    "module-alias": "^2.2.3",
     "nodemon": "^2.0.22",
+    "protobufjs-cli": "^1.1.1",
     "rimraf": "^3.0.2",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",

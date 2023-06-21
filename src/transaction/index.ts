@@ -5,8 +5,8 @@ import {
   ExtendedElGamal,
   SecretSharing,
 } from '@desig/core'
-import { Connection, EventStreaming } from './connection'
-import { DesigKeypair } from './keypair'
+import { Connection, EventStreaming } from '../connection'
+import { DesigKeypair } from '../keypair'
 import { concatBytes } from '@noble/hashes/utils'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { decode, encode } from 'bs58'
@@ -17,28 +17,9 @@ import {
   PaginationParams,
   TransactionParams,
   TransactionType,
-} from './types'
-import { compare } from './utils'
+} from '../types'
 import { Curve } from '@desig/supported-chains'
-
-export class Selector {
-  private selectors: Record<TransactionType, Uint8Array> = {
-    nExtension: keccak_256(TransactionType.nExtension).subarray(0, 8),
-    nReduction: keccak_256(TransactionType.nReduction).subarray(0, 8),
-    tExtension: keccak_256(TransactionType.tExtension).subarray(0, 8),
-    tReduction: keccak_256(TransactionType.tReduction).subarray(0, 8),
-  }
-
-  getType = (selector: Uint8Array) => {
-    const type = Object.keys(this.selectors).find((key: TransactionType) =>
-      compare(this.selectors[key], selector),
-    ) as TransactionType
-    if (!type) throw new Error('Invalid transaction type')
-    return type
-  }
-
-  getSelector = (type: TransactionType) => this.selectors[type]
-}
+import { TransactionParser } from './transaction.parser'
 
 export class Transaction extends Connection {
   public sss: SecretSharing
@@ -177,7 +158,7 @@ export class Transaction extends Connection {
    */
   signTransaction = async (transactionId: string) => {
     // Heroes
-    const selector = new Selector()
+    const txParser = new TransactionParser()
     const elgamal = new ElGamal()
     const { msg, raw, signatures } = await this.getTransaction(transactionId)
     const { pullrequest } = signatures.find(
@@ -187,7 +168,7 @@ export class Transaction extends Connection {
     let sig = this.sign(decode(this.index), decode(msg))
     // Handle transaction
     const tx = decode(raw)
-    const txType = selector.getType(tx.subarray(0, 8))
+    const { txType } = (await txParser.verify(tx)) || {}
     // n-Extension: Publish z = s + r
     if (txType === TransactionType.nExtension) {
       const r = elgamal.decrypt(
@@ -242,23 +223,34 @@ export class Transaction extends Connection {
    * @returns Signer data
    */
   syncTransaction = async () => {
-    const selector = new Selector()
+    const txParser = new TransactionParser()
     const extendedElgamal = new ExtendedElGamal()
     const elgamal = new ElGamal()
+    const ff = this.sss.ff
+
+    // Validate transaction
     const txs = await this.getTransactions({ approved: true })
     const currentGid = encode(this.keypair.id)
-    const currentPos = txs.findIndex(
-      ({ raw }) => encode(decode(raw).subarray(8, 16)) === currentGid,
-    )
+    let currentPos = -1
+    for (let i = 0; i < txs.length; i++) {
+      const { raw } = txs[i]
+      const { refgid } = await txParser.verify(decode(raw))
+      if (encode(refgid) === currentGid) {
+        currentPos = i
+        break
+      }
+    }
+    if (currentPos < 0) throw new Error('Corrupted chain data.')
+
+    // Start sync
     const waitingTxs = txs.slice(0, currentPos + 1)
     while (waitingTxs.length) {
       const { id: transactionId, raw } = waitingTxs.pop()
       const { signatures } = await this.getTransaction(transactionId)
       const tx = decode(raw)
-      const txType = selector.getType(tx.subarray(0, 8))
-      const gid = tx.subarray(8, 16)
-      const t = tx.subarray(16, 24)
-      const n = tx.subarray(24, 32)
+      const { txType, refgid, t, n } = await txParser.verify(tx)
+      const _t = ff.decode(ff.numberToRedBN(t), 8)
+      const _n = ff.decode(ff.numberToRedBN(n), 8)
       const { pullrequest } = signatures.find(
         ({ signer: { id } }) => id === this.index,
       ) || { pullrequest: encode(tx.subarray(72)) }
@@ -269,21 +261,21 @@ export class Transaction extends Connection {
           this.privkey,
         )
         this.keypair.proactivate(
-          concatBytes(this.keypair.index, t, n, decode(transactionId), zero),
+          concatBytes(this.keypair.index, _t, _n, decode(transactionId), zero),
         )
       }
       // n-Reduction
       else if (txType === TransactionType.nReduction) {
         const zero = elgamal.decrypt(decode(pullrequest), this.privkey)
         this.keypair.proactivate(
-          concatBytes(this.keypair.index, t, n, decode(transactionId), zero),
+          concatBytes(this.keypair.index, _t, _n, decode(transactionId), zero),
         )
       }
       // t-Extension
       else if (txType === TransactionType.tExtension) {
         const zero = elgamal.decrypt(decode(pullrequest), this.privkey)
         this.keypair.proactivate(
-          concatBytes(this.keypair.index, t, n, decode(transactionId), zero),
+          concatBytes(this.keypair.index, _t, _n, decode(transactionId), zero),
         )
       }
       // t-Reduction
@@ -300,24 +292,21 @@ export class Transaction extends Connection {
           ])
           .map(([id, signature]) => {
             const commitment = signature.subarray(64)
-            return concatBytes(id, t, n, gid, commitment)
+            return concatBytes(id, _t, _n, refgid, commitment)
           })
         const z = this.sss.ff.neg(
           this.sss.ff.mul(
             this.sss.ft1(shares),
-            this.sss.ff.pow(
-              this.keypair.index,
-              this.sss.ff.encode(t).toNumber(),
-            ),
+            this.sss.ff.pow(this.keypair.index, t),
           ),
         )
         this.keypair.proactivate(
-          concatBytes(this.keypair.index, t, n, decode(transactionId), z),
+          concatBytes(this.keypair.index, _t, _n, decode(transactionId), z),
         )
         this.keypair.proactivate(
-          concatBytes(this.keypair.index, t, n, decode(transactionId), zero),
+          concatBytes(this.keypair.index, _t, _n, decode(transactionId), zero),
         )
-      } else throw new Error('Invalid Desig transaction type')
+      } else throw new Error('Unsupported Desig transaction.')
     }
 
     const encryptedShare = encode(

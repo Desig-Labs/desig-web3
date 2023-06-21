@@ -39,8 +39,9 @@ export const isHex = (hex: string): number => {
  * @param str Base58 string
  * @returns
  */
-export const isBase58 = (str: string) => {
+export const isBase58 = (str?: string): str is string => {
   try {
+    if (!str) return false
     return str === encode(decode(str))
   } catch (er) {
     return false
@@ -52,8 +53,9 @@ export const isBase58 = (str: string) => {
  * @param pubkey Address
  * @returns
  */
-export const isAddress = (pubkey: string) => {
+export const isAddress = (pubkey?: string): pubkey is string => {
   try {
+    if (!pubkey) return false
     Point.fromHex(decode(pubkey))
     return true
   } catch (er) {

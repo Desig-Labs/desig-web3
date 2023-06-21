@@ -1,0 +1,44 @@
+package transaction;
+syntax = "proto3";
+
+message BaseTransaction {
+    required bytes selector = 1;
+    required bytes refgid = 2;
+    required uint64 t = 3;
+    required uint64 n = 4;
+}
+
+message nExtension {
+    required bytes selector = 1;
+    required bytes refgid = 2;
+    required uint64 t = 3;
+    required uint64 n = 4;
+    required bytes k = 5;
+
+    required bytes pubkey = 6;
+    required bytes kr = 7;
+    required bytes kzero = 8;
+}
+
+message nReduction {
+    required bytes selector = 1;
+    required bytes refgid = 2;
+    required uint64 t = 3;
+    required uint64 n = 4;
+    
+    required bytes k = 5;
+}
+
+message tExtension {
+    required bytes selector = 1;
+    required bytes refgid = 2;
+    required uint64 t = 3;
+    required uint64 n = 4;
+}
+
+message tReduction {
+    required bytes selector = 1;
+    required bytes refgid = 2;
+    required uint64 t = 3;
+    required uint64 n = 4;
+}

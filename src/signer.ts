@@ -10,6 +10,7 @@ import type {
 import { concatBytes } from '@noble/hashes/utils'
 import { DesigKeypair } from './keypair'
 import { ec } from './utils'
+import { TransactionParser } from './transaction/transaction.parser'
 
 export class Signer extends Connection {
   constructor(cluster: string, privkey: string) {
@@ -63,9 +64,11 @@ export class Signer extends Connection {
       multisig: { id: multisigId, curve },
     } = await this.getSigner(signerId)
     if (!encryptedShare) {
+      const txParser = new TransactionParser()
       const extendedElgamal = new ExtendedElGamal()
       const elgamal = new ElGamal()
-      const sss = new SecretSharing(ec[curve].ff)
+      const ff = ec[curve].ff
+      const sss = new SecretSharing(ff)
       const {
         data: { raw, signatures },
       } = await this.connection.get<
@@ -74,13 +77,10 @@ export class Signer extends Connection {
         }
       >(`/transaction/${genesis}`)
       // Compute the share
-      const txData = decode(raw)
-      const gid = txData.subarray(8, 16)
-      const t = txData.subarray(16, 24)
-      const n = sss.ff.decode(
-        sss.ff.encode(txData.subarray(24, 32)).redSub(sss.ff.ONE),
-        8,
-      )
+      const tx = decode(raw)
+      const { refgid, t, n, kr } = txParser.nExtension.decode(tx)
+      const _t = ff.decode(ff.numberToRedBN(Number(t)), 8)
+      const _n = ff.decode(ff.numberToRedBN(Number(n)), 8)
       const z = sss.interpolate(
         decode(signerId),
         signatures
@@ -91,12 +91,12 @@ export class Signer extends Connection {
           ])
           .map(([index, signature]) => {
             const commitment = signature.subarray(64)
-            return concatBytes(index, t, n, gid, commitment)
+            return concatBytes(index, _t, _n, refgid, commitment)
           }),
       )
-      const r = elgamal.decrypt(txData.subarray(72, 136), this.privkey)
+      const r = elgamal.decrypt(kr, this.privkey)
       const s = sss.ff.sub(z, r)
-      const share = concatBytes(decode(signerId), t, n, gid, s)
+      const share = concatBytes(decode(signerId), _t, _n, refgid, s)
       const secret = `${curve}/${multisigId}/${encode(share)}`
       // Encrypt the share
       encryptedShare = encode(
