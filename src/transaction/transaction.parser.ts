@@ -1,6 +1,6 @@
 import { keccak_256 } from '@noble/hashes/sha3'
 import { transaction } from '@desig/proto'
-import { compare } from '../utils'
+import { equal } from '@desig/core'
 
 export enum TransactionType {
   tExtension = 'tExtension',
@@ -20,20 +20,20 @@ export class TransactionParser {
   }
 
   static parseType = (selector: Uint8Array) => {
-    if (compare(selector, this.selectors.nExtension))
+    if (equal([selector, this.selectors.nExtension]))
       return TransactionType.nExtension
-    if (compare(selector, this.selectors.nReduction))
+    if (equal([selector, this.selectors.nReduction]))
       return TransactionType.nReduction
-    if (compare(selector, this.selectors.tExtension))
+    if (equal([selector, this.selectors.tExtension]))
       return TransactionType.tExtension
-    if (compare(selector, this.selectors.tReduction))
+    if (equal([selector, this.selectors.tReduction]))
       return TransactionType.tReduction
     throw new Error('Unsupported Desig transaction.')
   }
 
   verify = async (buf: Uint8Array, gid?: Uint8Array) => {
     const { selector, refgid, t, n } = transaction.BaseTransaction.decode(buf)
-    if (!!gid && !compare(gid, refgid)) throw new Error('Stale transaction.')
+    if (!!gid && !equal([gid, refgid])) throw new Error('Stale transaction.')
     return {
       txType: TransactionParser.parseType(selector),
       refgid,
