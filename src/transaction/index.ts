@@ -184,7 +184,7 @@ export class Transaction extends Connection {
     // t-Extension: Do nothing
     else if (txType === TransactionType.tExtension) {
     }
-    // t-Reduction
+    // t-Reduction: Publish z = s + r
     else if (txType === TransactionType.tReduction) {
       const r = elgamal.decrypt(
         decode(pullrequest).subarray(0, 64),

@@ -1,10 +1,11 @@
-import { ECTSS, EdCurve, EdTSS, ElGamal, SecretSharing } from '@desig/core'
+import { ECTSS, EdTSS, ElGamal } from '@desig/core'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { concatBytes } from '@noble/hashes/utils'
+import * as ec from '@noble/secp256k1'
+import * as ed from '@noble/ed25519'
 import { decode, encode } from 'bs58'
 import { Connection, EventStreaming } from './connection'
 import { DesigKeypair } from './keypair'
-import { Multisig } from './multisig'
 import type {
   ExtendedApprovalEntity,
   ExtendedProposalEntity,
@@ -227,9 +228,9 @@ export class Proposal extends Connection {
   verifySignature = async (id: string, signature: Uint8Array) => {
     const { msg } = await this.getProposal(id)
     if (this.keypair.curve === Curve.ed25519)
-      return EdTSS.verify(decode(msg), signature, this.keypair.masterkey)
+      return ed.verify(signature, decode(msg), this.keypair.masterkey)
     if (this.keypair.curve === Curve.secp256k1)
-      return ECTSS.verify(decode(msg), signature, this.keypair.masterkey)
+      return ec.verify(signature, decode(msg), this.keypair.masterkey)
     throw new Error('Invalid crypto system')
   }
 }
