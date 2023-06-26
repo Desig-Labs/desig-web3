@@ -9,7 +9,7 @@ export const carolPrivkey = 'Bro7rv256G25xvsuY4dbRN2PiQtwR97RpeKAwXJTKfq'
 export const eddyPrivkey = 'HcACvzN7TZW7qCzMpFW6udQug8iPvWBVwtB472xVm1yK'
 
 // Cluster
-export const cluster = 'http://127.0.0.1:8787'
+export const cluster = 'https://cluster.desig.dev'
 export const chain = {
   ed25519: new SolanaDevnet(),
   secp256k1: new Goerli(),
