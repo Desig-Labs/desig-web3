@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Desig: The Blockchain-Agnostic Multisig Solution",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -36,9 +36,6 @@
   "engines": {
     "node": ">=16 <=18"
   },
-  "_moduleAliases": {
-    "@desig/proto": "./proto"
-  },
   "dependencies": {
     "@desig/core": "^1.0.6",
     "@desig/supported-chains": "^1.0.16",
@@ -63,7 +60,6 @@
     "chai": "^4.3.7",
     "gh-pages": "^4.0.0",
     "mocha": "^10.2.0",
-    "module-alias": "^2.2.3",
     "nodemon": "^2.0.22",
     "protobufjs-cli": "^1.1.1",
     "rimraf": "^3.0.2",

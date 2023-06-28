@@ -1,5 +1,5 @@
 import { keccak_256 } from '@noble/hashes/sha3'
-import { transaction } from '@desig/proto'
+import { transaction } from '../../proto'
 import { equal } from '@desig/core'
 
 export enum TransactionType {

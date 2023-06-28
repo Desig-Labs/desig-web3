@@ -3,10 +3,6 @@
     "module": "commonjs",
     "lib": ["es2015"],
     "target": "es6",
-    "baseUrl": ".",
-    "paths": {
-      "@desig/proto": ["./proto"]
-    },
     "outDir": "./dist",
     "declaration": true,
     "removeComments": true,
