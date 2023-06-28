@@ -20,3 +20,5 @@ export * from './evm'
 export * from './sol'
 export * from './sui'
 export * from './apt'
+
+export { TransactionParser } from './transaction/transaction.parser'
