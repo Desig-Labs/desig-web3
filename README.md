@@ -2,7 +2,7 @@
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/DesigLabs?style=social)](https://twitter.com/DesigLabs)
 
-This library to help clients to interact with the Desig cluster.
+This library helps clients to interact with the Desig cluster.
 
 ## Installation
 
@@ -83,7 +83,7 @@ const aliceKeypair = new DesigKeypair('<alice_secret_share>')
 const bobKeypair = new DesigKeypair('<bob_secret_share>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
-// Alice initilizes a transaction
+// Alice initializes a transaction
 const aliceProposal = new Proposal(
   'https://mainnet.desig.io',
   alicePrivkey,
@@ -128,7 +128,7 @@ const aliceKeypair = new DesigKeypair('<alice_secret_share>')
 const bobKeypair = new DesigKeypair('<bob_secret_share>')
 // aliceKeypair.masterkey === bobKeypair.masterkey is true
 const masterkey = new PublicKey(aliceKeypair.masterkey)
-// Alice initilizes a transaction
+// Alice initializes a transaction
 const aliceProposal = new Proposal(
   'https://mainnet.desig.io',
   alicePrivkey,
