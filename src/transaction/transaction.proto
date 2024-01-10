@@ -1,6 +1,11 @@
 package transaction;
 syntax = "proto3";
 
+message ZKProof {
+    repeated bytes zpoints = 1;
+    repeated bytes rpoints = 2;
+}
+
 message BaseTransaction {
     required bytes selector = 1;
     required bytes refgid = 2;

@@ -21,4 +21,8 @@ export * from './sol'
 export * from './sui'
 export * from './apt'
 
-export { TransactionParser } from './transaction/transaction.parser'
+export {
+  TransactionParser,
+  TZkProofParser,
+} from './transaction/transaction.parser'
+export { MZkProofParser } from './multisig/multisig.parser'

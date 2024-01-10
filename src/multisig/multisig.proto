@@ -1,0 +1,6 @@
+package multisig;
+syntax = "proto3";
+
+message ZKProof {
+    repeated bytes points = 1;
+}

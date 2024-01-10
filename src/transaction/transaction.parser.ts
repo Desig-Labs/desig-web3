@@ -118,3 +118,19 @@ export class TransactionParser {
     },
   }
 }
+
+export class TZkProofParser {
+  constructor() {}
+
+  encode = (data: transaction.IZKProof) => {
+    const er = transaction.ZKProof.verify(data)
+    if (er) throw new Error(er)
+    const msg = transaction.ZKProof.create(data)
+    return transaction.ZKProof.encode(msg).finish()
+  }
+
+  decode = (buf: Uint8Array) => {
+    const data = transaction.ZKProof.decode(buf)
+    return data
+  }
+}

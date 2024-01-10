@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { Connection, EventStreaming } from './connection'
-import type { MultisigEntity, SignerEntity } from './types'
+import { Connection, EventStreaming } from '../connection'
+import type { MultisigEntity, SignerEntity } from '../types'
 import { decode } from 'bs58'
-import { isAddress } from './utils'
+import { isAddress } from '../utils'
 import { Curve } from '@desig/supported-chains'
 
 export class Multisig extends Connection {
