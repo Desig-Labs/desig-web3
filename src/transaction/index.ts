@@ -295,7 +295,7 @@ export class Transaction extends Connection {
             const commitment = signature.subarray(64)
             return concatBytes(
               id,
-              this.sss.ff.add(_t, this.sss.ff.decode(this.sss.ff.ONE)),
+              ff.decode(ff.numberToRedBN(t).add(this.sss.ff.ONE), 8),
               _n,
               refgid,
               commitment,
