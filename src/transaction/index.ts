@@ -254,6 +254,7 @@ export class Transaction extends Connection {
       const { pullrequest } = signatures.find(
         ({ signer: { id } }) => id === this.index,
       ) || { pullrequest: encode(tx.subarray(72)) }
+
       // n-Extension
       if (txType === TransactionType.nExtension) {
         const zero = elgamal.decrypt(
@@ -292,7 +293,13 @@ export class Transaction extends Connection {
           ])
           .map(([id, signature]) => {
             const commitment = signature.subarray(64)
-            return concatBytes(id, _t, _n, refgid, commitment)
+            return concatBytes(
+              id,
+              this.sss.ff.add(_t, this.sss.ff.decode(this.sss.ff.ONE)),
+              _n,
+              refgid,
+              commitment,
+            )
           })
         const z = this.sss.ff.neg(
           this.sss.ff.mul(

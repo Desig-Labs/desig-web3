@@ -1,6 +1,6 @@
 {
   "name": "@desig/web3",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Desig: The Blockchain-Agnostic Multisig Solution",
   "homepage": "https://web3.desig.io/",
   "keywords": [
@@ -24,13 +24,10 @@
   "scripts": {
     "build:proto": "pbjs -t static-module -w commonjs -o proto/index.js ./src/**/*.proto && pbts -o proto/index.d.ts proto/index.js",
     "build:ts": "tsc",
-    "prebuild": "yarn clean && mkdir proto",
-    "build": "yarn build:proto && yarn build:ts",
-    "predeploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts",
-    "deploy": "echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
-    "pretest": "yarn build",
-    "test": "mocha --exit --require ts-node/register -t 120000 test/**/*.*.test.ts",
-    "test:watch": "nodemon --ext ts --watch src --watch test --exec \"yarn test\"",
+    "build": "pnpm clean && mkdir proto && pnpm build:proto && pnpm build:ts",
+    "deploy": "typedoc --includeVersion --excludePrivate --excludeProtected ./src/index.ts && echo web3.desig.io >> ./docs/CNAME && gh-pages -d docs",
+    "test": "pnpm build && mocha --exit --require ts-node/register -t 120000 test/**/*.*.test.ts",
+    "test:watch": "nodemon --ext ts --watch src --watch test --exec \"pnpm test\"",
     "clean": "rimraf dist && rimraf proto"
   },
   "engines": {
