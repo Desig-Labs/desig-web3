@@ -6,10 +6,10 @@ settings:
 
 dependencies:
   '@desig/core':
-    specifier: ^1.0.6
-    version: 1.0.6
+    specifier: ^1.0.7
+    version: 1.0.7
   '@desig/supported-chains':
-    specifier: ^1.0.16
+    specifier: ^1.1.3
     version: 1.1.3
   '@noble/ed25519':
     specifier: ^1.7.1
@@ -139,8 +139,8 @@ packages:
       '@jridgewell/trace-mapping': 0.3.9
     dev: true
 
-  /@desig/core@1.0.6:
-    resolution: {integrity: sha512-S7WVRTJEFI2KArqD8tEuRcHaGaX0BOXqzoTlI7jKomlxYLeE0NNeQkAaKF3FZc1wIS+ZfvUYX4G/oTlyYdAH2A==}
+  /@desig/core@1.0.7:
+    resolution: {integrity: sha512-eK2zMfcISYD11P1khtW8HPoc11QU/fR9AekuTo0sTgv4z+5ZowgTg8MGByTFfHJvoMz2WpzOG1jiI6H92p5T9Q==}
     engines: {node: '>=16 <=18'}
     dependencies:
       '@noble/ed25519': 1.7.3
