@@ -295,17 +295,14 @@ export class Transaction extends Connection {
             const commitment = signature.subarray(64)
             return concatBytes(
               id,
-              ff.decode(ff.numberToRedBN(t).add(this.sss.ff.ONE), 8),
+              ff.decode(ff.numberToRedBN(t).add(ff.ONE), 8),
               _n,
               refgid,
               commitment,
             )
           })
-        const z = this.sss.ff.neg(
-          this.sss.ff.mul(
-            this.sss.ft1(shares),
-            this.sss.ff.pow(this.keypair.index, t),
-          ),
+        const z = ff.neg(
+          ff.mul(this.sss.ft1(shares), ff.pow(this.keypair.index, t)),
         )
         this.keypair.proactivate(
           concatBytes(this.keypair.index, _t, _n, decode(transactionId), z),
